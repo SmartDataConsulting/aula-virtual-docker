@@ -1,0 +1,49 @@
+# Dependencias
+/vendor
+/node_modules
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Cache / testing
+.phpunit.result.cache
+.phpunit.cache
+coverage/
+tests/_output/
+
+# Laravel storage generado
+/storage/logs/*
+/storage/framework/*
+/storage/app/*
+!/storage/app/.gitignore
+
+# Build
+/public/build
+/public/hot
+
+# IDE
+.vscode/
+.idea/
+.fleet/
+.zed/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker / CI
+docker/
+docker-compose.yml
+compose.yaml
+
+# Composer / npm lock (si no quieres versionarlos)
+composer.lock
+package-lock.json
+
+# Otros configs locales
+auth.json
+.phpactor.json
+Homestead.json
+Homestead.yaml

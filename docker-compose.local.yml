@@ -1,0 +1,224 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: aula_virtual_redis_local
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+
+  portal:
+    build:
+      context: ./aula-virtual
+      dockerfile: Dockerfile.local
+    container_name: aula_virtual_portal_local
+    working_dir: /var/www
+    volumes:
+      - ./aula-virtual:/var/www
+      - portal-vendor:/var/www/vendor
+      - portal-cache:/var/www/storage/framework/cache
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - api-nginx
+      - redis
+    environment:
+      APP_DEBUG: "false"
+      LOG_LEVEL: warning
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      API_SERVICIOS_BASE_URL: http://api-nginx
+      INTERNAL_SERVICE_TOKEN: change-me
+      API_SERVICIOS_TIMEOUT: 5
+      API_SERVICIOS_RETRY_TIMES: 0
+    entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
+    command: >
+      php-fpm
+    configs:
+      - source: aula_entrypoint
+        target: /usr/local/bin/aula-entrypoint
+
+  portal-nginx:
+    image: nginx:1.27-alpine
+    container_name: aula_virtual_portal_nginx_local
+    depends_on:
+      - portal
+    ports:
+      - "8000:80"
+    volumes:
+      - ./aula-virtual:/var/www:ro
+      - ./docker/nginx/portal.conf:/etc/nginx/conf.d/default.conf:ro
+
+  api-servicios:
+    build:
+      context: ./aula-virtual-api-servicios
+      dockerfile: docker/php/Dockerfile
+    container_name: aula_virtual_api_servicios_local
+    working_dir: /var/www
+    volumes:
+      - ./aula-virtual-api-servicios/src:/var/www
+      - api-vendor:/var/www/vendor
+      - api-cache:/var/www/storage/framework/cache
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+    environment:
+      APP_DEBUG: "false"
+      LOG_LEVEL: warning
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      DB_SLOW_QUERY_MS: 250
+      DB_SGA_HOST: host.docker.internal
+      DB_SGA_PORT: 3306
+      DB_SGA_DATABASE: smartdata
+      DB_SGA_USERNAME: root
+      DB_SGA_PASSWORD: ""
+      SGA_PUBLIC_BASE_URL: http://localhost/sga-web
+    entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
+    command: >
+      php-fpm
+    configs:
+      - source: aula_entrypoint
+        target: /usr/local/bin/aula-entrypoint
+
+  api-nginx:
+    image: nginx:1.27-alpine
+    container_name: aula_virtual_api_nginx_local
+    depends_on:
+      - api-servicios
+    ports:
+      - "8011:80"
+    volumes:
+      - ./aula-virtual-api-servicios/src:/var/www:ro
+      - ./docker/nginx/api.conf:/etc/nginx/conf.d/default.conf:ro
+
+  portal-worker:
+    build:
+      context: ./aula-virtual
+      dockerfile: Dockerfile.local
+    container_name: aula_virtual_portal_worker_local
+    working_dir: /var/www
+    volumes:
+      - ./aula-virtual:/var/www
+      - portal-vendor:/var/www/vendor
+      - portal-cache:/var/www/storage/framework/cache
+    depends_on:
+      - redis
+      - api-nginx
+    environment:
+      APP_DEBUG: "false"
+      LOG_LEVEL: warning
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      API_SERVICIOS_BASE_URL: http://api-nginx
+      INTERNAL_SERVICE_TOKEN: change-me
+      API_SERVICIOS_TIMEOUT: 5
+      API_SERVICIOS_RETRY_TIMES: 0
+    entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
+    command: >
+      php artisan queue:work redis --sleep=1 --tries=1 --timeout=60
+    configs:
+      - source: aula_entrypoint
+        target: /usr/local/bin/aula-entrypoint
+
+  portal-scheduler:
+    build:
+      context: ./aula-virtual
+      dockerfile: Dockerfile.local
+    container_name: aula_virtual_portal_scheduler_local
+    working_dir: /var/www
+    volumes:
+      - ./aula-virtual:/var/www
+      - portal-vendor:/var/www/vendor
+      - portal-cache:/var/www/storage/framework/cache
+    depends_on:
+      - redis
+      - api-nginx
+    environment:
+      APP_DEBUG: "false"
+      LOG_LEVEL: warning
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      API_SERVICIOS_BASE_URL: http://api-nginx
+      INTERNAL_SERVICE_TOKEN: change-me
+      API_SERVICIOS_TIMEOUT: 5
+      API_SERVICIOS_RETRY_TIMES: 0
+    entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
+    command: >
+      sh -lc "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
+    configs:
+      - source: aula_entrypoint
+        target: /usr/local/bin/aula-entrypoint
+
+  api-worker:
+    build:
+      context: ./aula-virtual-api-servicios
+      dockerfile: docker/php/Dockerfile
+    container_name: aula_virtual_api_worker_local
+    working_dir: /var/www
+    volumes:
+      - ./aula-virtual-api-servicios/src:/var/www
+      - api-vendor:/var/www/vendor
+      - api-cache:/var/www/storage/framework/cache
+    depends_on:
+      - redis
+    environment:
+      APP_DEBUG: "false"
+      LOG_LEVEL: warning
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      DB_SLOW_QUERY_MS: 250
+    entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
+    command: >
+      php artisan queue:work redis --sleep=1 --tries=1 --timeout=60
+    configs:
+      - source: aula_entrypoint
+        target: /usr/local/bin/aula-entrypoint
+
+  api-scheduler:
+    build:
+      context: ./aula-virtual-api-servicios
+      dockerfile: docker/php/Dockerfile
+    container_name: aula_virtual_api_scheduler_local
+    working_dir: /var/www
+    volumes:
+      - ./aula-virtual-api-servicios/src:/var/www
+      - api-vendor:/var/www/vendor
+      - api-cache:/var/www/storage/framework/cache
+    depends_on:
+      - redis
+    environment:
+      APP_DEBUG: "false"
+      LOG_LEVEL: warning
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      DB_SLOW_QUERY_MS: 250
+    entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
+    command: >
+      sh -lc "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
+    configs:
+      - source: aula_entrypoint
+        target: /usr/local/bin/aula-entrypoint
+
+volumes:
+  redis-data:
+  portal-vendor:
+  api-vendor:
+  portal-cache:
+  api-cache:
+
+configs:
+  aula_entrypoint:
+    file: ./docker/php/entrypoint.sh
+

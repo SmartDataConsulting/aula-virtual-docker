@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+
+/**
+ * Controlador de login basado en el trait del framework (respaldo).
+ */
+class LoginController extends Controller
+{
+    use AuthenticatesUsers;
+
+    /**
+     * Opcional: ruta por defecto tras login.
+     * Si prefieres lógica, el método authenticated() la sobreescribe.
+     */
+    protected $redirectTo = '/mis-cursos';
+
+    public function __construct()
+    {
+        $this->middleware('guest')->except('logout');
+    }
+
+    /**
+     * Si quieres redirigir siempre a la ruta nombrada 'mis.cursos'.
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        return redirect()->route('mis.cursos');
+    }
+}

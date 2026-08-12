@@ -1,0 +1,132 @@
+/* =====================================================
+   CONTENEDOR GENERAL
+===================================================== */
+.announcement {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+
+/* =====================================================
+   CARD BASE
+===================================================== */
+.announcement-card {
+  border-radius: 12px;
+  padding: 20px 22px 14px 22px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+
+/* =====================================================
+   TIPOS DE ANUNCIO
+===================================================== */
+.announcement-important {
+  background: #FFF4DB;   /* amarillo suave */
+}
+
+.announcement-info {
+  background: #E8F2FF;   /* azul suave */
+}
+
+.announcement-general {
+  background: #F4F6F8;   /* gris claro */
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+.announcement-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+/* =====================================================
+   BADGE
+===================================================== */
+.announcement-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  min-width: 60px;
+}
+
+/* Badge por tipo */
+.announcement-important .announcement-badge {
+  background: #F4C430;
+  color: #0A2540;
+}
+
+.announcement-info .announcement-badge {
+  background: #1F6AE1;
+  color: #fff;
+}
+
+.announcement-general .announcement-badge {
+  background: #CBD5E1;
+  color: #1E293B;
+}
+
+
+/* =====================================================
+   CONTENIDO (TRUNCADO + EXPANSIÓN)
+===================================================== */
+.announcement-content {
+  margin-top: 8px;
+  line-height: 1.6;
+
+  /* Truncado por defecto (desktop) */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;   /* 👈 número de líneas visibles */
+  overflow: hidden;
+
+  transition: all 0.25s ease;
+}
+
+/* Expandido */
+.announcement-content.expandido {
+  -webkit-line-clamp: unset;
+  display: block;
+  overflow: visible;
+  max-height: none;
+}
+
+/* Mobile: mostrar una línea más */
+@media (max-width: 768px) {
+  .announcement-content {
+    -webkit-line-clamp: 3;
+  }
+}
+
+
+/* =====================================================
+   ACCIONES
+===================================================== */
+.announcement-actions {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.announcement-actions a {
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.announcement-actions a:first-child {
+  color: #1F6AE1;
+}
+
+.announcement-actions .ver-todos {
+  margin-left: auto;
+  color: #1F6AE1;
+}

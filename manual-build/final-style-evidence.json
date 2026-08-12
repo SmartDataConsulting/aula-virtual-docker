@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\Desarrollo\\Downloads\\Manual de Funcionalidades Aula Virtual - Actualizado.docx",
+  "fonts_by_char_count": {
+    "Georgia": 15416
+  },
+  "direct_run_formatting_runs": 299,
+  "direct_paragraph_formatting_paragraphs": 60,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "Manual de Funcionalidades",
+      "style": "Title"
+    },
+    {
+      "para_index": 70,
+      "text": "Campo",
+      "style": "normal"
+    },
+    {
+      "para_index": 71,
+      "text": "Detalle",
+      "style": "normal"
+    },
+    {
+      "para_index": 82,
+      "text": "Resumen ejecutivo",
+      "style": "normal"
+    },
+    {
+      "para_index": 84,
+      "text": "Componente",
+      "style": "normal"
+    },
+    {
+      "para_index": 85,
+      "text": "Responsabilidad",
+      "style": "normal"
+    },
+    {
+      "para_index": 86,
+      "text": "Estado",
+      "style": "normal"
+    },
+    {
+      "para_index": 108,
+      "text": "M\u00f3dulo",
+      "style": "normal"
+    },
+    {
+      "para_index": 109,
+      "text": "Ya Funciona",
+      "style": "normal"
+    },
+    {
+      "para_index": 110,
+      "text": "Pendiente Recomendado",
+      "style": "normal"
+    },
+    {
+      "para_index": 144,
+      "text": "Rol",
+      "style": "normal"
+    },
+    {
+      "para_index": 145,
+      "text": "Puede Ver",
+      "style": "normal"
+    },
+    {
+      "para_index": 146,
+      "text": "Puede Ejecutar",
+      "style": "normal"
+    },
+    {
+      "para_index": 147,
+      "text": "Restricciones",
+      "style": "normal"
+    },
+    {
+      "para_index": 160,
+      "text": "Pesta\u00f1a",
+      "style": "normal"
+    },
+    {
+      "para_index": 161,
+      "text": "Uso Para Alumno",
+      "style": "normal"
+    },
+    {
+      "para_index": 162,
+      "text": "Estado UX Esperado",
+      "style": "normal"
+    },
+    {
+      "para_index": 181,
+      "text": "Acci\u00f3n",
+      "style": "normal"
+    },
+    {
+      "para_index": 182,
+      "text": "Estado Actual",
+      "style": "normal"
+    },
+    {
+      "para_index": 183,
+      "text": "Mejora Recomendada",
+      "style": "normal"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "Manual de Funcionalidades",
+        "style": "Title"
+      },
+      {
+        "para_index": 2,
+        "text": "Aula Virtual Smart Data",
+        "style": "Subtitle"
+      },
+      {
+        "para_index": 3,
+        "text": "Estado actual, flujos operativos y plan de implementaci\u00f3n",
+        "style": "normal"
+      },
+      {
+        "para_index": 6,
+        "text": "1. Alcance Del Manual",
+        "style": "Heading 1"
+      },
+      {
+        "para_index": 7,
+        "text": "Este documento actualiza el manual funcional del Aula Virtual y lo convierte en una gu\u00eda de estado del proyecto. Su obje",
+        "style": "normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "Manual de Funcionalidades",
+        "style": "Title"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Aula Virtual Smart Data",
+        "style": "Subtitle"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Estado actual, flujos operativos y plan de implementaci\u00f3n",
+        "style": "normal"
+      },
+      {
+        "para_index": 6,
+        "run_text": "1. Alcance Del Manual",
+        "style": "Heading 1"
+      },
+      {
+        "para_index": 7,
+        "run_text": "Este documento actualiza el manual funcional del Aula Virtual y lo convierte en ",
+        "style": "normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

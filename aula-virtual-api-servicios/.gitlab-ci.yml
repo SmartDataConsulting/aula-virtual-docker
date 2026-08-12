@@ -1,0 +1,18 @@
+stages:
+  - deploy
+
+deploy_api:
+  stage: deploy
+  tags:
+    - deploy-aula
+  script:
+    - cd /aulavirtual/lumen
+    - git fetch origin develop
+    - git reset --hard origin/develop
+    - docker exec lumen_api_servicios php artisan config:cache
+    - docker exec lumen_api_servicios php artisan view:clear
+    - docker exec lumen_api_servicios php artisan route:cache
+    # Si usas Docker para la API, descomenta la línea de abajo y pon el nombre real del contenedor
+    # - docker exec nombre_del_contenedor_api php artisan cache:clear
+  only:
+    - develop

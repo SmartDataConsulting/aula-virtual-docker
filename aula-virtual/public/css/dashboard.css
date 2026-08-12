@@ -1,0 +1,15 @@
+:root{ --accent:#5b2bff; --muted:#6c757d; }
+.sidebar{ width:240px; flex-shrink:0; }
+.sidebar .sidebar-brand{ display:flex; align-items:center; gap:10px; padding:16px 12px; }
+.sidebar-logo{ width:36px; height:auto; }
+.sidebar-title{ font-weight:700; }
+.sidebar-nav{ padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
+.sidebar-link{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:#223; text-decoration:none; font-weight:500; }
+.sidebar-link.active{ background:#f3f6ff; color:var(--accent); }
+.page-title{ margin:0; font-size:28px; }
+.course-card{ background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 12px 30px rgba(20,30,70,0.05); display:flex; flex-direction:column; }
+.course-cover{ height:160px; background-size:cover; background-position:center; }
+.course-body{ padding:18px; }
+.badge-category{ float:right; background:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
+.btn-continue{ background:linear-gradient(180deg,var(--accent),#3b16e6); border:none; color:#fff; border-radius:10px; padding:12px; }
+@media (max-width:900px){ .sidebar{ display:none; } .flex-fill.ms-4{ margin-left:0 !important; } .course-cover{ height:140px; } }

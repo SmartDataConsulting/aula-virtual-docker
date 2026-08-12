@@ -1,0 +1,36 @@
+# Dependencias
+/vendor
+/node_modules
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Cache
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# Storage (archivos generados)
+src/storage/*.key
+src/storage/logs/*
+src/storage/framework/*
+src/storage/app/files/*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Otros
+npm-debug.log
+yarn-error.log
+
+# Ignorar archivos PHP src
+src/.styleci.yml

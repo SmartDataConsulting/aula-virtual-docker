@@ -1,0 +1,1742 @@
+:root {
+  --q-bg: var(--color-surface, #ffffff);
+  --q-bg-soft: var(--color-surface-soft, #f8fafc);
+  --q-border: var(--color-border, #e2e8f0);
+  --q-border-strong: #cbd5e1;
+  --q-text: var(--color-text, #334155);
+  --q-text-soft: #475569;
+  --q-text-muted: var(--color-muted, #64748b);
+  --q-accent: var(--color-primary, #1f6ae1);
+  --q-accent-hover: var(--color-primary-hover, #1659c4);
+  --q-accent-soft: var(--color-primary-soft, #eaf2ff);
+  --q-accent-border: var(--color-primary-border, #cfe0fa);
+}
+
+.qualification-work-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.qualification-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(10, 37, 64, 0.06);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.qualification-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(31, 106, 225, 0.08);
+  color: var(--brand-dark);
+}
+
+.qualification-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--brand-light);
+}
+
+.qualification-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.qualification-status--completed {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.qualification-status--draft {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.qualification-status--pending {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.qualification-card-title {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.qualification-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.qualification-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.qualification-stat-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.qualification-stat-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.qualification-stat-value {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.qualification-stat-note {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.qualification-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.qualification-progress-value {
+  font-weight: 600;
+  color: var(--brand-dark);
+}
+
+.qualification-empty {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(10, 37, 64, 0.06);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  font-size: 14px;
+  color: #64748b;
+}
+
+.qualification-course-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.qualification-search-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.qualification-search-toolbar form {
+  min-width: 0;
+}
+
+.qualification-search-box {
+  position: relative;
+}
+
+.qualification-search-box svg {
+  position: absolute;
+  left: 1.05rem;
+  top: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+.qualification-search-box input {
+  width: 100%;
+  min-height: 3.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.85rem 1rem 0.85rem 3.1rem;
+  color: #0f172a;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.qualification-search-box input:focus {
+  border-color: var(--brand-light);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(31, 106, 225, 0.12);
+}
+
+.qualification-search-help {
+  color: #475569;
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.qualification-course-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.qualification-course-btn--primary {
+  background: var(--q-accent);
+  border: 1px solid var(--q-accent);
+  color: #fff;
+}
+
+.qualification-course-btn--primary:hover {
+  background: var(--q-accent-hover);
+  border-color: var(--q-accent-hover);
+}
+
+.qualification-course-btn--secondary {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+.qualification-course-btn--secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+@media (min-width: 1024px) {
+  .qualification-work-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .qualification-search-toolbar {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.85rem;
+  }
+
+  .qualification-search-help {
+    white-space: normal;
+  }
+
+  .qualification-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qualification-notes-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.qualification-notes-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.qualification-notes-hero > div {
+  flex: 1;
+}
+
+.qualification-notes-hero-copy {
+  margin: 0.5rem 0 0;
+  max-width: none;
+  color: #64748b;
+}
+
+.qualification-notes-hero-meta {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  font-size: 0.92rem;
+  color: #475569;
+}
+
+.qualification-notes-hero--card {
+  background: #f8fafc;
+  border: 1px solid var(--q-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.qualification-notes-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.qualification-notes-stat,
+.qualification-notes-panel-card,
+.qualification-notes-panel,
+.qualification-notes-table-shell,
+.qualification-notes-alert {
+  background: #fff;
+  border: 1px solid var(--q-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.qualification-notes-stat {
+  padding: 1rem 1.15rem;
+}
+
+.qualification-notes-stat-label {
+  display: block;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.qualification-notes-stat-value {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.qualification-notes-stat small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #475569;
+}
+
+.qualification-notes-alert {
+  padding: 0.9rem 1rem;
+  color: #9a3412;
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.qualification-notes-alert--success {
+  color: #047857;
+  border-color: #86efac;
+  background: #ecfdf5;
+}
+
+.qualification-notes-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+
+.qualification-notes-search {
+  display: grid;
+  gap: 0.4rem;
+  min-width: min(100%, 320px);
+}
+
+.qualification-notes-search span,
+.qualification-notes-panel-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.qualification-notes-search input,
+.qualification-notes-form input,
+.qualification-notes-form textarea {
+  width: 100%;
+  border: 1px solid var(--q-border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 0.85rem 0.95rem;
+  color: #0f172a;
+}
+
+.qualification-notes-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.qualification-notes-board {
+  min-width: 0;
+}
+
+.qualification-notes-top-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--q-border);
+  border-radius: 9999px;
+  background: #fff;
+  height: 14px;
+  margin-bottom: 0.6rem;
+}
+
+.qualification-notes-top-scroll-inner {
+  height: 1px;
+}
+
+.qualification-notes-table-shell {
+  overflow: auto;
+}
+
+.qualification-notes-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.qualification-notes-table th,
+.qualification-notes-table td {
+  padding: 0.9rem 0.8rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+  background: #fff;
+}
+
+.qualification-notes-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+}
+
+.qualification-notes-student-col,
+.qualification-notes-student-cell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  min-width: 260px;
+}
+
+.qualification-notes-table thead .qualification-notes-student-col {
+  background: #f8fafc;
+  z-index: 3;
+}
+
+.qualification-notes-average-col,
+.qualification-notes-average-cell {
+  position: sticky;
+  left: 260px;
+  z-index: 2;
+  background: #fff;
+  min-width: 96px;
+}
+
+.qualification-notes-table thead .qualification-notes-average-col {
+  background: #f8fafc;
+  z-index: 3;
+}
+
+.qualification-notes-col-head {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.qualification-notes-col-head strong {
+  font-size: 0.92rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.qualification-notes-col-head span {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.qualification-notes-student {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.qualification-notes-student-avatar {
+  width: 38px;
+  height: 38px;
+}
+
+.qualification-notes-student-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.qualification-notes-student-name,
+.qualification-notes-average-cell strong {
+  color: #0f172a;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.qualification-notes-student-email {
+  display: block;
+  color: #6b7280;
+  font-size: 0.83rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.qualification-notes-cell {
+  width: 100%;
+  min-width: 120px;
+  display: grid;
+  gap: 0.2rem;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  padding: 0.8rem;
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qualification-notes-cell--link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.qualification-notes-cell:hover,
+.qualification-notes-cell.is-active {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  border-color: #94a3b8;
+}
+
+.qualification-notes-cell-score {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.qualification-notes-cell-label {
+  font-size: 0.78rem;
+}
+
+.qualification-notes-cell-action {
+  width: fit-content;
+  margin-top: 0.25rem;
+  border-radius: 9999px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.42rem 0.62rem;
+  text-decoration: none;
+}
+
+.qualification-notes-cell-action:hover {
+  background: #1f6ae1;
+}
+
+.qualification-notes-cell--approved {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.qualification-notes-cell--failed {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fda4af;
+}
+
+.qualification-notes-cell--pending {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+}
+
+.qualification-notes-cell--missing {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.qualification-notes-average-cell {
+  text-align: center;
+  min-width: 90px;
+}
+
+.qualification-notes-panel {
+  padding: 1.1rem;
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.qualification-notes-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.qualification-notes-panel-card {
+  padding: 1rem;
+}
+
+.qualification-notes-panel-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1px solid #dbe4f0;
+  background: #fff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.qualification-notes-panel-close:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.qualification-notes-panel-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.qualification-notes-panel-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.qualification-notes-panel-student {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+
+.qualification-notes-panel-avatar {
+  width: 42px;
+  height: 42px;
+}
+
+.qualification-notes-panel-student-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.qualification-notes-panel-email {
+  color: #64748b;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.qualification-notes-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.qualification-notes-panel-grid > div {
+  min-width: 0;
+}
+
+.qualification-notes-panel-grid strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: #0f172a;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.qualification-notes-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.qualification-notes-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.qualification-notes-history {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.qualification-notes-history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qualification-notes-history-head h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.qualification-notes-history-head span,
+.qualification-notes-history-empty {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.qualification-notes-history-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.qualification-notes-history-item {
+  border: 1px solid var(--q-border);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  background: #fff;
+}
+
+.qualification-notes-history-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #0f172a;
+}
+
+.qualification-notes-history-item p,
+.qualification-notes-history-item small {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+}
+
+.qualification-subsanation-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.qualification-subsanation-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.qualification-subsanation-main {
+  position: static;
+}
+.qualification-subsanation-summary-card {
+  background: var(--q-bg-soft);
+  border-color: var(--q-border-strong);
+}
+
+.qualification-subsanation-score {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.qualification-subsanation-form {
+  background: #fff;
+  border: 1px solid var(--q-border);
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.qualification-subsanation-actions .qualification-course-btn {
+  width: auto;
+  min-width: 180px;
+}
+.qualification-subsanation-history {
+  background: #fff;
+  border: 1px solid var(--q-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  padding: 1.1rem;
+}
+
+.qualification-subsanation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.qualification-subsanation-actions .qualification-course-btn {
+  width: auto;
+  min-width: 160px;
+}
+
+.qualification-course-btn--secondary {
+  opacity: 0.75;
+}
+
+.qualification-course-btn--secondary:hover {
+  opacity: 1;
+}
+
+.qualification-subsanation-current-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  padding: 0.7rem 0.85rem;
+  color: #1e3a8a;
+  font-size: 0.86rem;
+}
+
+.qualification-subsanation-current-file span {
+  font-weight: 700;
+}
+
+.qualification-subsanation-current-file a,
+.qualification-subsanation-current-file strong {
+  color: #0f172a;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1279px) {
+  .qualification-notes-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .qualification-subsanation-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .qualification-notes-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qualification-notes-panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .qualification-notes-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qualification-review-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(360px, 440px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.qualification-review-sidebar,
+.qualification-review-panel {
+  background: var(--q-bg);
+  border: 1px solid var(--q-border);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.qualification-review-sidebar {
+  overflow: hidden;
+  position: sticky;
+  top: 1rem;
+}
+
+.qualification-review-sidebar-head {
+  padding: 1rem;
+  border-bottom: 1px solid var(--q-border);
+}
+
+.qualification-review-sidebar-head h2,
+.qualification-review-rubric-head h2,
+.qualification-review-selected-body h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--q-text);
+}
+
+.qualification-review-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.qualification-review-final-score {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  background: var(--q-bg-soft);
+  border: 1px solid var(--q-border);
+  color: var(--q-text-soft);
+  font-size: 0.9rem;
+}
+
+.qualification-review-final-score strong {
+  color: var(--q-text);
+  font-size: 1rem;
+}
+
+.qualification-review-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.8rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid var(--q-accent);
+  background: var(--q-accent);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.qualification-review-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.8rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid var(--q-border-strong);
+  background: #fff;
+  color: var(--q-text);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.qualification-review-secondary-btn:hover {
+  background: var(--q-bg-soft);
+  border-color: #94a3b8;
+}
+
+.qualification-review-primary-btn:hover {
+  background: var(--q-accent-hover);
+  border-color: var(--q-accent-hover);
+}
+
+.qualification-review-secondary-btn:disabled,
+.qualification-review-primary-btn--disabled,
+.qualification-review-primary-btn--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.qualification-review-secondary-btn:disabled {
+  background: #fff;
+  border-color: var(--q-border-strong);
+  color: var(--q-text-muted);
+}
+
+.qualification-review-primary-btn--disabled,
+.qualification-review-primary-btn--disabled:hover {
+  background: #94a3b8;
+  border-color: #94a3b8;
+}
+
+.qualification-review-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.qualification-review-stat {
+  border-radius: 16px;
+  padding: 0.9rem;
+  border: 1px solid var(--q-border);
+  background: var(--q-bg-soft);
+}
+
+.qualification-review-stat span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--q-text-muted);
+}
+
+.qualification-review-stat strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--q-text);
+}
+
+.qualification-review-stat--corrected,
+.qualification-review-stat--pending {
+  background: var(--q-bg-soft);
+  border-color: var(--q-border);
+}
+
+.qualification-review-search {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+}
+
+.qualification-review-search-input {
+  width: 100%;
+  border: 1px solid var(--q-border-strong);
+  border-radius: 14px;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.92rem;
+  color: var(--q-text);
+  background: #fff;
+  outline: none;
+}
+
+.qualification-review-search-input:focus {
+  border-color: var(--q-accent);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.10);
+}
+
+.qualification-review-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid var(--q-border-strong);
+  background: #fff;
+  color: var(--q-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.qualification-review-refresh-btn:hover {
+  background: var(--q-bg-soft);
+  border-color: #94a3b8;
+}
+
+.qualification-review-secondary-btn.is-saving,
+.qualification-review-primary-btn.is-saving {
+  opacity: 0.72;
+}
+
+body.qualification-review-loading {
+  cursor: progress;
+}
+
+.qualification-review-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.qualification-review-loading-card {
+  min-width: min(100%, 320px);
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.4rem 1.5rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+  text-align: center;
+}
+
+.qualification-review-loading-card strong {
+  color: var(--q-text);
+  font-size: 1rem;
+}
+
+.qualification-review-loading-card span:last-child {
+  color: var(--q-text-muted);
+  font-size: 0.9rem;
+}
+
+.qualification-review-loading-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 9999px;
+  border: 3px solid #dbe4f0;
+  border-top-color: var(--q-accent);
+  animation: qualification-review-spin 0.8s linear infinite;
+}
+
+@keyframes qualification-review-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.qualification-review-student-list {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.qualification-review-student-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qualification-review-student-card:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.qualification-review-student-card--active {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+}
+
+.qualification-review-student-card--disabled {
+  pointer-events: none;
+}
+
+.qualification-review-student-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eef2f7;
+  color: #64748b;
+}
+
+.qualification-review-student-avatar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.qualification-review-student-avatar--missing {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.qualification-review-student-avatar--pending {
+  background: #fff7ed;
+  color: #d97706;
+}
+
+.qualification-review-student-avatar--corrected {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.qualification-review-selected-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #64748b;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.qualification-review-student-body,
+.qualification-review-selected-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.qualification-review-student-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.qualification-review-student-name {
+  display: block;
+  font-size: 0.93rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--q-text);
+}
+
+.qualification-review-student-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+}
+
+.qualification-review-student-indicator--missing {
+  background: #374151;
+}
+
+.qualification-review-student-indicator--pending {
+  background: #f59e0b;
+}
+
+.qualification-review-student-indicator--corrected {
+  background: #22c55e;
+}
+
+.qualification-review-student-meta-simple {
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.qualification-review-student-date {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.qualification-review-student-state {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.qualification-review-student-state--missing {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.qualification-review-student-state--pending {
+  background: #fff7ed;
+  color: #d97706;
+}
+
+.qualification-review-student-state--corrected {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.qualification-review-sidebar-foot {
+  border-top: 1px solid var(--q-border);
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  color: var(--q-text-muted);
+  text-align: center;
+}
+
+.qualification-review-main {
+  display: grid;
+  gap: 1rem;
+}
+
+.qualification-review-panel {
+  padding: 1rem;
+}
+
+.qualification-review-panel--header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.qualification-review-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.qualification-review-selected-body p {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--q-text-muted);
+}
+
+.qualification-review-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.qualification-review-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  border: 1px solid var(--q-border-strong);
+  color: var(--q-text);
+  text-decoration: none;
+  background: #fff;
+}
+
+.qualification-review-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.qualification-review-icon-btn--disabled {
+  opacity: 0.45;
+}
+
+.qualification-review-files {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.qualification-review-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--q-border);
+  background: #fff;
+}
+
+.qualification-review-file-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.qualification-review-file-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--q-bg-soft);
+  color: var(--q-text-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.qualification-review-file-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.qualification-review-file-text {
+  min-width: 0;
+}
+
+.qualification-review-file-text strong {
+  display: block;
+  color: var(--q-text);
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.qualification-review-file-text span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--q-text-muted);
+  font-size: 0.8rem;
+}
+
+.qualification-review-download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  padding: 0.7rem 0.95rem;
+  border-radius: 12px;
+  background: var(--q-accent);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.qualification-review-download-btn--disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.qualification-review-notes {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.qualification-review-note-card {
+  border-radius: 18px;
+  border: 1px solid var(--q-border);
+  background: var(--q-bg-soft);
+  padding: 1rem;
+}
+
+.qualification-review-note-card span {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--q-text-soft);
+}
+
+.qualification-review-note-card p {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--q-text);
+}
+
+.qualification-review-rubric {
+  position: sticky;
+  top: 1rem;
+}
+
+.qualification-review-panel--rubric {
+  padding-bottom: 0;
+}
+
+.qualification-review-rubric-head {
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--q-border);
+}
+
+.qualification-review-rubric-hint {
+  margin: 0.45rem 0 0;
+  color: var(--q-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.qualification-review-rubric-list {
+  display: grid;
+  gap: 0.85rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem 0 1rem;
+}
+
+.qualification-review-rubric-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--q-border);
+  background: #fff;
+}
+
+.qualification-review-rubric-card--editable {
+  display: grid;
+  gap: 1rem;
+}
+
+.qualification-review-rubric-copy strong {
+  display: block;
+  color: var(--q-text);
+  font-size: 0.95rem;
+}
+
+.qualification-review-rubric-copy p,
+.qualification-review-rubric-copy small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--q-text-muted);
+  line-height: 1.5;
+}
+
+.qualification-review-rubric-copy p {
+  font-size: 0.84rem;
+}
+
+.qualification-review-rubric-copy small {
+  font-size: 0.76rem;
+}
+
+.qualification-review-rubric-score {
+  text-align: right;
+  min-width: 74px;
+}
+
+.qualification-review-rubric-score span {
+  display: block;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.qualification-review-rubric-score strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--q-text);
+  font-size: 1rem;
+}
+
+.qualification-review-rubric-editor {
+  display: grid;
+  gap: 0.9rem;
+  width: 100%;
+}
+
+.qualification-review-levels {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(58px, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.qualification-review-level-option {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.qualification-review-level-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.qualification-review-level-chip {
+  display: flex;
+  width: 100%;
+  min-height: 78px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border-radius: 14px;
+  border: 1px solid var(--q-border-strong);
+  background: #fff;
+  padding: 0.65rem 0.35rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.qualification-review-level-chip strong {
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--q-text);
+}
+
+.qualification-review-level-chip small {
+  font-size: 0.68rem;
+  line-height: 1.15;
+  color: var(--q-text-muted);
+  word-break: break-word;
+}
+
+.qualification-review-level-option input:checked + .qualification-review-level-chip {
+  border-color: var(--q-accent);
+  background: var(--q-accent-soft);
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.12);
+}
+
+.qualification-review-observation {
+  display: grid;
+  gap: 0.55rem;
+  padding-bottom: 1rem;
+}
+
+.qualification-review-observation label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.qualification-review-textarea {
+  width: 100%;
+  border: 1px solid var(--q-border-strong);
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  color: var(--q-text);
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  min-height: 108px;
+}
+
+.qualification-review-textarea:focus {
+  border-color: var(--q-accent);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.10);
+}
+
+.qualification-review-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0 1.1rem;
+  border-top: 1px solid var(--q-border);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--q-text);
+}
+
+.qualification-review-inline-alert,
+.qualification-review-empty {
+  border-radius: 18px;
+  border: 1px solid var(--q-border);
+  background: var(--q-bg-soft);
+  padding: 1rem;
+  color: var(--q-text-muted);
+  font-size: 0.9rem;
+}
+
+.qualification-review-inline-alert {
+  border-color: #fecaca;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.qualification-review-empty--large {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.qualification-review-rubric-copy,
+.qualification-review-rubric-score {
+  width: 100%;
+}
+
+@media (max-width: 1279px) {
+  .qualification-review-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .qualification-review-sidebar,
+  .qualification-review-rubric {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .qualification-review-panel--header,
+  .qualification-review-file-card,
+  .qualification-review-rubric-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .qualification-review-rubric-score {
+    text-align: left;
+  }
+
+  .qualification-review-topbar,
+  .qualification-review-nav {
+    width: 100%;
+  }
+
+  .qualification-review-levels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qualification-review-primary-btn,
+  .qualification-review-secondary-btn,
+  .qualification-review-download-btn,
+  .qualification-review-refresh-btn {
+    width: 100%;
+  }
+
+  .qualification-review-search {
+    grid-template-columns: 1fr;
+  }
+
+  .qualification-review-rubric-card--editable {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .qualification-review-rubric-editor {
+    display: grid;
+    gap: 0.9rem;
+    width: 100%;
+  }
+
+  .qualification-review-rubric-copy,
+  .qualification-review-rubric-score {
+    width: 100%;
+  }
+
+  .qualification-review-student-card {
+    padding: 0.85rem;
+  }
+
+  .qualification-review-student-name {
+    font-size: 0.88rem;
+  }
+}

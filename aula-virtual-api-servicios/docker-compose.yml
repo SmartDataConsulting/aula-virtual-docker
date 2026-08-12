@@ -1,0 +1,20 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: api_servicios
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "8001:8000"
+    command: sh -c "{ [ -f vendor/autoload.php ] || composer install; } && { [ -f .env ] || cp .env.example .env; } && PHP_CLI_SERVER_WORKERS=4 php -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -S 0.0.0.0:8000 -t public public/index.php"
+  scheduler:
+    image: aula-virtual-api-servicios-api
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    command: sh -c "{ [ -f vendor/autoload.php ] || composer install; } && while true; do php artisan schedule:run --no-interaction; sleep 60; done"
+    depends_on:
+      - api
