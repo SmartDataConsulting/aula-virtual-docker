@@ -1,0 +1,43 @@
+FROM php:8.2-fpm
+
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    zip \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql zip \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+COPY src/composer.json src/composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-scripts
+
+COPY src ./
+
+COPY docker/php/uploads.prod.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY docker/php/opcache.prod.ini /usr/local/etc/php/conf.d/opcache.ini
+
+RUN mkdir -p \
+    storage/logs \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache \
+    && composer dump-autoload --no-dev --optimize \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R ug+rwX storage bootstrap/cache
+
+EXPOSE 9000
+
+CMD ["php-fpm"]

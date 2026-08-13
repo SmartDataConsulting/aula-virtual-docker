@@ -1,0 +1,14 @@
+.git
+.gitignore
+src/.env
+src/.env.*
+!src/.env.example
+src/vendor
+src/storage/logs/*
+src/storage/framework/cache/*
+src/storage/framework/sessions/*
+src/storage/framework/views/*
+src/bootstrap/cache/*
+src/.phpunit.result.cache
+src/tests
+*.log
