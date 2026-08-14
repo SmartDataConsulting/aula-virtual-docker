@@ -141,14 +141,23 @@ proxy_connect_timeout 60s;
 
 No crees un Proxy Host para `api-nginx`; el API queda interno y lo consume el portal con `http://api-nginx`.
 
-## Conexion A MySQL Existente
+## Bases De Datos De Produccion
+
+Aula Virtual usa dos fuentes en produccion:
+
+- WordPress/JWT para alumnos: base `u937232440_WPVF9`, consumida por `WP_AUTH_BASE_URL`.
+- Core SmartData para cursos y operaciones: base `u937232440_sd_core`, consumida por el API mediante `DB_CURSOS_*`.
+
+No ejecutes migraciones de Aula sobre `u937232440_WPVF9`. WordPress mantiene esa base.
 
 Tu VPS ya publica `wp-mysql` en el host. Si no unes redes Docker, usa en `/opt/aula-virtual/.env.api`:
 
 ```env
 DB_CURSOS_HOST=host.docker.internal
 DB_CURSOS_PORT=3307
-DB_CURSOS_DATABASE=smartdata
+DB_CURSOS_DATABASE=u937232440_sd_core
+DB_CURSOS_USERNAME=aula_core_user
+DB_CURSOS_PASSWORD=CAMBIAR_PASSWORD_CORE
 ```
 
 El compose agrega `host.docker.internal:host-gateway` para que funcione en Linux.
@@ -158,6 +167,16 @@ Si luego decides unir el stack a la red donde vive `wp-mysql`, cambia a:
 ```env
 DB_CURSOS_HOST=wp-mysql
 DB_CURSOS_PORT=3306
+DB_CURSOS_DATABASE=u937232440_sd_core
+```
+
+En `/opt/aula-virtual/.env.portal` configura WordPress:
+
+```env
+WP_AUTH_BASE_URL=https://TU_WORDPRESS
+WP_JWT_TOKEN_PATH=/wp-json/jwt-auth/v1/token
+WP_JWT_VALIDATE_PATH=/wp-json/jwt-auth/v1/token/validate
+API_SERVICIOS_BASE_URL=http://api-nginx
 ```
 
 ## Comandos Post Deploy
@@ -175,8 +194,11 @@ En el contenedor `api`:
 ```bash
 php artisan config:cache
 php artisan route:cache
+php artisan migrate:status
 php artisan migrate --force
 ```
+
+Antes de ejecutar `migrate --force`, crea un backup de `u937232440_sd_core`. No necesitas respaldar ni modificar `u937232440_WPVF9` para las migraciones de Aula.
 
 ## Actualizar Version
 
@@ -203,6 +225,42 @@ cd /opt/aula-virtual
 docker compose -f docker-compose.portainer.yml build
 docker compose -f docker-compose.portainer.yml up -d
 ```
+
+## Actualizacion Automatica Desde GitLab
+
+Para produccion se recomienda que Portainer administre los contenedores, pero que GitLab CI ejecute el deploy por SSH. Asi el pipeline puede validar, desplegar, optimizar y hacer healthchecks.
+
+Configura el repo raiz `aula-virtual-docker` en GitLab y usa el `.gitlab-ci.yml` de la raiz. Los pipelines internos de `aula-virtual` y `aula-virtual-api-servicios` estan obsoletos.
+
+Variables necesarias en GitLab:
+
+```text
+VPS_HOST=IP_O_HOST_DEL_VPS
+VPS_USER=root
+VPS_SSH_PRIVATE_KEY=CLAVE_PRIVADA_DEL_DEPLOY
+DEPLOY_PATH=/opt/aula-virtual
+PROD_BRANCH=main
+PRODUCTION_URL=https://aula.tudominio.com
+```
+
+El runner debe tener acceso a Docker y SSH, con tag:
+
+```text
+deploy-aula-prod
+```
+
+Cuando hagas merge o push a `main`, GitLab ejecutara:
+
+```bash
+cd /opt/aula-virtual
+git fetch origin main
+git reset --hard origin/main
+docker compose --env-file .env.deploy -f docker-compose.portainer.yml up -d --build --remove-orphans
+```
+
+Despues ejecutara cache de Laravel/Lumen y validara `/login` y `api-nginx/up`.
+
+Las migraciones quedan en el job manual `migrate_production`. Antes de ejecutarlo, respalda `u937232440_sd_core`. No se ejecutan migraciones sobre WordPress.
 
 ## Validacion Rapida
 

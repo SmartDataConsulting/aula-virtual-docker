@@ -1,0 +1,159 @@
+stages:
+  - validate
+  - deploy
+  - optimize
+  - healthcheck
+  - migrate_production
+
+variables:
+  PROD_BRANCH: "main"
+  DEPLOY_PATH: "/opt/aula-virtual"
+  COMPOSE_FILE: "docker-compose.portainer.yml"
+  COMPOSE_ENV_FILE: ".env.deploy"
+  DOCKER_BUILDKIT: "1"
+
+.production_rules:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $PROD_BRANCH'
+
+.deploy_runner:
+  tags:
+    - deploy-aula-prod
+
+.ssh_setup:
+  before_script:
+    - 'command -v ssh-agent >/dev/null || (echo "ssh-agent no disponible en el runner" && exit 1)'
+    - eval "$(ssh-agent -s)"
+    - echo "$VPS_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+
+validate_build:
+  stage: validate
+  extends:
+    - .deploy_runner
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $PROD_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - docker version
+    - docker compose version
+    - docker build --pull -f aula-virtual/Dockerfile.prod -t aula-virtual-portal-ci:$CI_COMMIT_SHORT_SHA aula-virtual
+    - docker build --pull -f aula-virtual/Dockerfile.nginx.prod -t aula-virtual-portal-nginx-ci:$CI_COMMIT_SHORT_SHA aula-virtual
+    - docker build --pull -f aula-virtual-api-servicios/docker/php/Dockerfile.prod -t aula-virtual-api-ci:$CI_COMMIT_SHORT_SHA aula-virtual-api-servicios
+    - docker build --pull -f aula-virtual-api-servicios/docker/nginx/Dockerfile.prod -t aula-virtual-api-nginx-ci:$CI_COMMIT_SHORT_SHA aula-virtual-api-servicios
+
+validate_tests:
+  stage: validate
+  extends:
+    - .deploy_runner
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $PROD_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - docker build -f aula-virtual/Dockerfile.local -t aula-virtual-portal-test:$CI_COMMIT_SHORT_SHA aula-virtual
+    - docker build -f aula-virtual-api-servicios/docker/php/Dockerfile -t aula-virtual-api-test:$CI_COMMIT_SHORT_SHA aula-virtual-api-servicios
+    - >
+      docker run --rm
+      -v "$CI_PROJECT_DIR/aula-virtual:/var/www"
+      -w /var/www
+      -e APP_ENV=testing
+      -e APP_KEY=base64:dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q=
+      -e CACHE_STORE=array
+      -e DB_CONNECTION=sqlite
+      -e DB_DATABASE=:memory:
+      -e SESSION_DRIVER=array
+      -e QUEUE_CONNECTION=sync
+      aula-virtual-portal-test:$CI_COMMIT_SHORT_SHA
+      sh -lc "apt-get update && apt-get install -y libsqlite3-dev && docker-php-ext-install pdo_sqlite && composer install --no-interaction --prefer-dist --no-progress && php artisan test --no-interaction"
+    - >
+      docker run --rm
+      -v "$CI_PROJECT_DIR/aula-virtual-api-servicios/src:/var/www"
+      -w /var/www
+      -e APP_ENV=testing
+      -e APP_KEY=base64:dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q=
+      -e CACHE_DRIVER=array
+      -e DB_CONNECTION=sqlite
+      -e DB_DATABASE=:memory:
+      -e QUEUE_CONNECTION=sync
+      aula-virtual-api-test:$CI_COMMIT_SHORT_SHA
+      sh -lc "apt-get update && apt-get install -y libsqlite3-dev && docker-php-ext-install pdo_sqlite && composer install --no-interaction --prefer-dist --no-progress && php artisan test --no-interaction"
+
+deploy_production:
+  stage: deploy
+  extends:
+    - .deploy_runner
+    - .ssh_setup
+    - .production_rules
+  script:
+    - >
+      ssh "$VPS_USER@$VPS_HOST"
+      "set -e;
+      cd '$DEPLOY_PATH';
+      git fetch origin '$PROD_BRANCH';
+      git reset --hard 'origin/$PROD_BRANCH';
+      test -f '$COMPOSE_ENV_FILE';
+      test -f '.env.portal';
+      test -f '.env.api';
+      test -f 'secrets/google-service-account.json';
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' up -d --build --remove-orphans"
+  environment:
+    name: production
+    url: $PRODUCTION_URL
+
+optimize_production:
+  stage: optimize
+  extends:
+    - .deploy_runner
+    - .ssh_setup
+    - .production_rules
+  needs:
+    - deploy_production
+  script:
+    - >
+      ssh "$VPS_USER@$VPS_HOST"
+      "set -e;
+      cd '$DEPLOY_PATH';
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T portal php artisan config:cache;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T portal php artisan route:cache;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T portal php artisan view:cache;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T api php artisan config:cache;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T api php artisan route:cache;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' restart portal-worker api-worker"
+
+healthcheck_production:
+  stage: healthcheck
+  extends:
+    - .deploy_runner
+    - .ssh_setup
+    - .production_rules
+  needs:
+    - optimize_production
+  script:
+    - >
+      ssh "$VPS_USER@$VPS_HOST"
+      "set -e;
+      cd '$DEPLOY_PATH';
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' ps;
+      curl -fsS 'http://127.0.0.1:${PORTAL_HTTP_PORT:-8010}/login' >/dev/null;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T portal php -r 'exit((bool) @file_get_contents(\"http://api-nginx/up\") ? 0 : 1);'"
+
+migrate_production:
+  stage: migrate_production
+  extends:
+    - .deploy_runner
+    - .ssh_setup
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $PROD_BRANCH'
+      when: manual
+      allow_failure: false
+  script:
+    - >
+      ssh "$VPS_USER@$VPS_HOST"
+      "set -e;
+      cd '$DEPLOY_PATH';
+      echo 'IMPORTANTE: este job solo debe ejecutarse despues de respaldar u937232440_sd_core.';
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T api php artisan migrate:status;
+      docker compose --env-file '$COMPOSE_ENV_FILE' -f '$COMPOSE_FILE' exec -T api php artisan migrate --force"

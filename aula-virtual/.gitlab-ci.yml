@@ -1,20 +1,11 @@
 stages:
-  - deploy
+  - deprecated
 
-deploy_dev:
-  stage: deploy
-  tags:
-    - deploy-aula
+deprecated_pipeline:
+  stage: deprecated
   script:
-    - cd /aulavirtual/laravel
-    # 1. Sincronizar el código en la carpeta del host
-    - git fetch origin develop
-    - git reset --hard origin/develop
-    
-    # 2. Ejecutar comandos DENTRO del contenedor de Docker
-    # Usamos -t para simular terminal, pero sin -i para que no se quede trabado
-    - docker exec laravel_app_new php artisan config:cache
-    - docker exec laravel_app_new php artisan view:clear
-    - docker exec laravel_app_new php artisan route:cache
-  only:
-    - develop
+    - echo "Este pipeline interno esta obsoleto."
+    - echo "Usa el .gitlab-ci.yml de la raiz aula-virtual-docker para deploy a produccion."
+  rules:
+    - when: manual
+      allow_failure: true

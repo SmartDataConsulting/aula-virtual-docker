@@ -59,6 +59,7 @@ cp .env.api.example .env.api
 - `INTERNAL_SERVICE_TOKEN`
 - `DB_CURSOS_*`
 - `DB_SGA_*`
+- `WP_AUTH_BASE_URL`
 - Google Drive
 - Zoom
 - SGA/Certificados
@@ -102,6 +103,23 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy exec portal php
 
 docker compose -f docker-compose.prod.yml --env-file .env.deploy exec api php artisan config:cache
 docker compose -f docker-compose.prod.yml --env-file .env.deploy exec api php artisan route:cache
+```
+
+## Bases De Datos Y Migraciones
+
+En produccion Aula Virtual separa credenciales y datos academicos:
+
+- Alumnos: WordPress JWT contra la base `u937232440_WPVF9`.
+- Cursos, sesiones, certificados, asistencia, evaluaciones y encuestas: API contra `u937232440_sd_core`.
+- Admin/docente: API contra `sd_core.usuario`.
+
+Las migraciones del API solo deben ejecutarse sobre `mysql_cursos`, es decir `u937232440_sd_core`. No ejecutes migraciones de Aula sobre `u937232440_WPVF9`.
+
+Antes de migrar:
+
+```bash
+mysqldump -h HOST -P PUERTO -u USUARIO -p u937232440_sd_core > backup_sd_core_$(date +%F_%H%M).sql
+docker compose -f docker-compose.prod.yml --env-file .env.deploy exec api php artisan migrate:status
 ```
 
 Si hay migraciones pendientes del API:
@@ -185,3 +203,51 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d
 ```
 
 Si una migracion fallo despues de modificar datos, restaurar el backup de base antes de levantar la version anterior.
+
+## Deploy Automatico Con GitLab CI
+
+El repo raiz `aula-virtual-docker` incluye un `.gitlab-ci.yml` para desplegar produccion por SSH cada vez que se actualiza `main`.
+
+### Variables En GitLab
+
+Configura estas variables en GitLab como `Protected` y, cuando aplique, `Masked`:
+
+```text
+VPS_HOST=IP_O_HOST_DEL_VPS
+VPS_USER=root
+VPS_SSH_PRIVATE_KEY=CLAVE_PRIVADA_DEL_DEPLOY
+DEPLOY_PATH=/opt/aula-virtual
+PROD_BRANCH=main
+PRODUCTION_URL=https://aula.tudominio.com
+```
+
+El runner debe tener el tag:
+
+```text
+deploy-aula-prod
+```
+
+### Flujo
+
+El pipeline hace:
+
+1. Construccion de imagenes productivas del portal y API.
+2. Pruebas del portal y API en contenedores aislados, sin publicar puertos.
+3. Deploy por SSH:
+
+```bash
+git fetch origin main
+git reset --hard origin/main
+docker compose --env-file .env.deploy -f docker-compose.portainer.yml up -d --build --remove-orphans
+```
+
+4. Cache de configuracion, rutas y vistas.
+5. Healthcheck de `/login` y `http://api-nginx/up`.
+
+### Migraciones
+
+El job `migrate_production` es manual. Antes de ejecutarlo, respalda `u937232440_sd_core`. Este job corre migraciones solo dentro del contenedor `api` y nunca toca la base WordPress `u937232440_WPVF9`.
+
+### CI Antiguos
+
+Los pipelines internos de `aula-virtual/.gitlab-ci.yml` y `aula-virtual-api-servicios/.gitlab-ci.yml` quedaron como obsoletos. No los uses para produccion; apuntaban a rutas y contenedores antiguos.
