@@ -5,25 +5,17 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\AuthService;
 use App\Support\AuthSessionKeys;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-use Illuminate\Support\Facades\Config;
-
-/**
- * Gestiona el login/logout usando autenticacion WordPress.
- */
 class LoginController extends Controller
 {
     protected $redirectTo = '/mis-cursos';
 
     public function __construct(private readonly AuthService $authService)
     {
-        // En este prototipo no usamos el middleware de Auth del framework
-        // $this->middleware('guest')->except('logout');
     }
 
     public function showLoginForm()
@@ -31,24 +23,21 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
-    
     public function login(Request $request)
     {
         $wpAuthBypass = filter_var(env('WP_AUTH_BYPASS', false), FILTER_VALIDATE_BOOLEAN);
 
         $request->validate([
             'username' => ['required', 'string'],
-        ]);
-
-        $username = trim((string) $request->input('username'));
-
-        $request->validate([
             'password' => [$wpAuthBypass ? 'nullable' : 'required'],
         ]);
 
+        $username = trim((string) $request->input('username'));
         $password = (string) $request->input('password', '');
 
-        Log::info('LOGIN TRY', ['username' => $username]);
+        Log::debug('Login attempt started.', [
+            'username_type' => str_contains($username, '@') ? 'email' : 'username',
+        ]);
 
         $lockSeconds = $this->getRemainingLockSeconds($username);
         if ($lockSeconds > 0) {
@@ -58,194 +47,167 @@ class LoginController extends Controller
         }
 
         if ($wpAuthBypass) {
-            $coreResult = $this->authService->authenticateWithCore($username, $password);
+            return $this->loginWithBypass($request, $username, $password);
+        }
 
-            Log::info('CORE RESULT DEBUG', [
-                'ok' => $coreResult->ok(),
-                'status' => $coreResult->status(),
-                'data' => $coreResult->data(),
-                'error' => $coreResult->error(),
-                'bypass_enabled' => true,
+        if (str_contains($username, '@')) {
+            $coreResponse = $this->tryCoreLogin($request, $username, $password);
+
+            if ($coreResponse !== null) {
+                return $coreResponse;
+            }
+        }
+
+        return $this->loginWithWordpress($request, $username, $password);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->session()->forget(AuthSessionKeys::all());
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+
+    private function loginWithBypass(Request $request, string $username, string $password)
+    {
+        $coreResult = $this->authService->authenticateWithCore($username, $password);
+
+        Log::debug('Core login bypass result.', [
+            'status' => $coreResult->status(),
+            'ok' => $coreResult->ok(),
+        ]);
+
+        if ($coreResult->ok()) {
+            $payload = (array) $coreResult->data();
+            $role = (string) ($payload['rol'] ?? '');
+
+            if ($role === '') {
+                throw new \RuntimeException('Rol no enviado por CORE');
+            }
+
+            $this->clearLoginAttempts($username);
+            $this->storeSessionData($request, $payload, $role, null);
+
+            Log::info('Login succeeded (core bypass).', [
+                'ip' => $request->ip(),
+                'role' => $role,
             ]);
 
-            if ($coreResult->ok()) {
-                $payload = $coreResult->data();
+            return redirect($this->redirectForRole($role));
+        }
 
-                if (!isset($payload['rol'])) {
-                    throw new \RuntimeException('Rol no enviado por CORE');
-                }
+        if ($coreResult->status() !== 404) {
+            $this->registerFailedLogin($username);
 
-                $this->clearLoginAttempts($username);
-                $this->storeSessionData($request, $payload, $payload['rol'], null);
+            return back()->withErrors([
+                'username' => $this->invalidCredentialsMessage(),
+            ])->onlyInput('username');
+        }
 
-                Log::info('Login succeeded (core)', [
-                    'username' => $username,
-                    'ip' => $request->ip(),
-                    'bypass_enabled' => true,
-                ]);
+        $payload = [
+            'email' => $username,
+            'nombre' => $username,
+            'token' => 'bypassed-token',
+        ];
 
-                return redirect('/backoffice/courses');
+        $this->clearLoginAttempts($username);
+        $this->storeSessionData($request, $payload, 'alumno', $payload['token']);
+
+        Log::info('Login bypassed as student.', [
+            'ip' => $request->ip(),
+        ]);
+
+        return redirect('/mis-cursos');
+    }
+
+    private function tryCoreLogin(Request $request, string $username, string $password): mixed
+    {
+        $coreResult = $this->authService->authenticateWithCore($username, $password);
+
+        Log::debug('Core login result.', [
+            'status' => $coreResult->status(),
+            'ok' => $coreResult->ok(),
+        ]);
+
+        if ($coreResult->ok()) {
+            $payload = (array) $coreResult->data();
+            $role = (string) ($payload['rol'] ?? '');
+
+            if ($role === '') {
+                throw new \RuntimeException('Rol no enviado por CORE');
             }
 
-            if ($coreResult->status() !== 404) {
-                $this->registerFailedLogin($username);
+            $this->clearLoginAttempts($username);
+            $this->storeSessionData($request, $payload, $role, null);
 
-                Log::warning('Login failed (core)', [
-                    'username' => $username,
-                    'ip' => $request->ip(),
-                    'status' => $coreResult->status(),
-                    'bypass_enabled' => true,
-                ]);
+            Log::info('Login succeeded (core).', [
+                'ip' => $request->ip(),
+                'role' => $role,
+            ]);
 
+            return redirect($this->redirectForRole($role));
+        }
+
+        if ($coreResult->status() === 404) {
+            return null;
+        }
+
+        $this->registerFailedLogin($username);
+
+        Log::warning('Login failed (core).', [
+            'ip' => $request->ip(),
+            'status' => $coreResult->status(),
+        ]);
+
+        return back()->withErrors([
+            'username' => $this->invalidCredentialsMessage(),
+        ])->onlyInput('username');
+    }
+
+    private function loginWithWordpress(Request $request, string $username, string $password)
+    {
+        $result = $this->authService->authenticateWithWordpress($username, $password);
+
+        if ($result->ok()) {
+            $payload = (array) $result->data();
+
+            if (empty($payload['token'])) {
                 return back()->withErrors([
-                    'username' => 'El usuario y/o la contraseña son incorrectos.',
+                    'username' => 'No se pudo iniciar sesion. Verifica tus credenciales.',
                 ])->onlyInput('username');
             }
-
-            $payload = [
-                'email' => $username,
-                'nombre' => $username,
-                'token' => 'bypassed-token',
-            ];
 
             $this->clearLoginAttempts($username);
             $this->storeSessionData($request, $payload, 'alumno', $payload['token']);
 
-            Log::info('Login bypassed (wordpress)', [
-                'username' => $username,
-                'email' => $payload['email'],
+            Log::info('Login succeeded (wordpress).', [
                 'ip' => $request->ip(),
             ]);
 
             return redirect('/mis-cursos');
         }
 
-        // Detectar si es usuario interno
-        $isEmail = str_contains($username, '@');
+        Log::warning('Login failed (wordpress).', [
+            'ip' => $request->ip(),
+            'status' => $result->status(),
+        ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | 1. Usuarios internos (CORE)
-        |--------------------------------------------------------------------------
-        */
+        $this->registerFailedLogin($username);
 
-        if ($isEmail) {
-
-            Log::info('Login routed to CORE', [
-                'username' => $username
-            ]);
-
-            $coreResult = $this->authService->authenticateWithCore($username, $password);
-
-            Log::info('CORE RESULT DEBUG', [
-                'ok' => $coreResult->ok(),
-                'status' => $coreResult->status(),
-                'data' => $coreResult->data(),
-                'error' => $coreResult->error()
-            ]);
-
-            if ($coreResult->ok()) {
-
-                $payload = $coreResult->data();
-                
-                if (!isset($payload['rol'])) {
-                    throw new \RuntimeException('Rol no enviado por CORE');
-                }
-
-                $role = $payload['rol'];
-
-                $this->clearLoginAttempts($username);
-
-                $this->storeSessionData($request, $payload, $role, null);
-
-                Log::info('Login succeeded (core)', [
-                    'username' => $username,
-                    'ip' => $request->ip(),
-                ]);
-                
-                return redirect('/backoffice/courses');
-            }
-
-            $this->registerFailedLogin($username);
-
-            Log::warning('Login failed (core)', [
-                'username' => $username,
-                'ip' => $request->ip(),
-            ]);
-
+        $lockSeconds = $this->getRemainingLockSeconds($username);
+        if ($lockSeconds > 0) {
             return back()->withErrors([
-                'username' => 'El usuario y/o la contraseña son incorrectos.',
-            ])->onlyInput('username');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 2. Usuarios alumnos (WordPress)
-    |--------------------------------------------------------------------------
-    */
-
-    $result = $this->authService->authenticateWithWordpress($username, $password);
-
-    if ($result->ok()) {
-        $payload = $result->data();
-        if (empty($payload['token'])) {
-            return back()->withErrors([
-                'username' => 'No se pudo iniciar sesión. Verifica tus credenciales.',
+                'username' => $this->formatLockMessage($lockSeconds),
             ])->onlyInput('username');
         }
-        $this->clearLoginAttempts($username);
-        $this->storeSessionData($request, $payload, 'alumno', $payload['token'] ?? null);
-        Log::info('Login succeeded (wordpress)', [
-            'username' => $username,
-            'ip' => $request->ip(),
-        ]);
-        return redirect('/mis-cursos');
-    }
 
-    Log::warning('Login failed (wordpress)', [
-        'username' => $username,
-        'ip' => $request->ip(),
-        'status' => $result->status(),
-    ]);
-
-    $this->registerFailedLogin($username);
-
-    $lockSeconds = $this->getRemainingLockSeconds($username);
-    if ($lockSeconds > 0) {
         return back()->withErrors([
-            'username' => $this->formatLockMessage($lockSeconds),
+            'username' => $this->resolveAuthError($result->status()),
         ])->onlyInput('username');
     }
 
-    return back()->withErrors([
-        'username' => $this->resolveAuthError($result->error(), $result->status()),
-    ])->onlyInput('username');
-
-    }
-
-
-    /**
-     * Cierra la sesion actual.
-     */
-    public function logout(Request $request)
-    {
-        $request->session()->forget(AuthSessionKeys::all()); 
-        $request->session()->invalidate(); 
-        $request->session()->regenerateToken(); 
-        return redirect()->route('login');
-    }
-
-    /**
-     * Redirige según el usuario después del login.
-     */
-    protected function authenticated(Request $request, $user)
-    {
-
-    }
-
-    /**
-     * Almacena datos de sesión y regenera la sesión.
-     */
     private function storeSessionData(Request $request, array $payload, string $role, ?string $token = null): void
     {
         $request->session()->regenerate();
@@ -258,17 +220,27 @@ class LoginController extends Controller
         $request->session()->put(AuthSessionKeys::USER_ROLE, $role);
     }
 
-    private function resolveAuthError(array $payload, int $status): string
+    private function redirectForRole(string $role): string
     {
-        if ($status === 0 || $status === 500 || $status === 502 || $status === 503 || $status === 504) {
-            return 'No se puede iniciar sesión en este momento. Intenta más tarde.';
+        return strtolower($role) === 'alumno' ? '/mis-cursos' : '/backoffice/courses';
+    }
+
+    private function resolveAuthError(int $status): string
+    {
+        if (in_array($status, [0, 500, 502, 503, 504], true)) {
+            return 'No se puede iniciar sesion en este momento. Intenta mas tarde.';
         }
 
         if (in_array($status, [401, 403], true)) {
-            return 'El usuario y/o la contraseña son incorrectos.';
+            return $this->invalidCredentialsMessage();
         }
 
-        return 'No se pudo iniciar sesión. Verifica tus credenciales.';
+        return 'No se pudo iniciar sesion. Verifica tus credenciales.';
+    }
+
+    private function invalidCredentialsMessage(): string
+    {
+        return 'El usuario y/o la contrasena son incorrectos.';
     }
 
     private function getRemainingLockSeconds(string $username): int
@@ -322,6 +294,7 @@ class LoginController extends Controller
     private function formatLockMessage(int $seconds): string
     {
         $minutes = (int) ceil($seconds / 60);
+
         return "Demasiados intentos. Intenta en {$minutes} minuto".($minutes === 1 ? '' : 's').'.';
     }
 
@@ -339,7 +312,4 @@ class LoginController extends Controller
     {
         return 'login:penalty:'.mb_strtolower(trim($username));
     }
-
-
- 
-    }
+}

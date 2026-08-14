@@ -1683,7 +1683,6 @@
             $endpoint = "/v1/login";
 
             Log::debug('API Servicios request (login).', [
-                'email' => $email,
                 'endpoint' => $endpoint,
             ]);
 
@@ -1697,9 +1696,7 @@
                             'password' => $password,
                         ]
                     ),
-                [
-                    'email' => $email,
-                ],
+                [],
                 [200]
             );
         }

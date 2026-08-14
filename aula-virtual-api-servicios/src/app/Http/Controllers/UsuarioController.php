@@ -37,7 +37,6 @@ class UsuarioController extends BaseController
         if (($login['status'] ?? '') === 'not_found') {
 
             Log::warning('login_failed_core', [
-                'email' => $email,
                 'reason' => 'not_found',
             ]);
 
@@ -50,7 +49,6 @@ class UsuarioController extends BaseController
         if (!$usuario) {
 
             Log::warning('login_failed_core', [
-                'email' => $email,
                 'reason' => $login['status'] ?? 'invalid',
             ]);
 
@@ -73,7 +71,6 @@ class UsuarioController extends BaseController
 
         Log::info('login_success_core', [
             'user_id' => $usuario->id,
-            'email' => $usuario->email,
             'ms' => $elapsed
         ]);
 

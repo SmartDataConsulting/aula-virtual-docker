@@ -22,8 +22,7 @@ class WordpressAuthClient
         $retryTimes = (int) config('services.wordpress.retry_times', 1);
         $retrySleep = (int) config('services.wordpress.retry_sleep', 200);
 
-        Log::info('WordPress auth token request.', [
-            'username' => $username,
+        Log::debug('WordPress auth token request.', [
             'base_url' => $baseUrl,
         ]);
 
@@ -50,7 +49,7 @@ class WordpressAuthClient
         $retryTimes = (int) config('services.wordpress.retry_times', 1);
         $retrySleep = (int) config('services.wordpress.retry_sleep', 200);
 
-        Log::info('WordPress auth validate request.', [
+        Log::debug('WordPress auth validate request.', [
             'base_url' => $baseUrl,
         ]);
 
