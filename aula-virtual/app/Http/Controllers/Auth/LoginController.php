@@ -80,7 +80,7 @@ class LoginController extends Controller
         ]);
 
         if ($coreResult->ok()) {
-            $payload = (array) $coreResult->data();
+            $payload = $this->normalizeCorePayload((array) $coreResult->data());
             $role = $this->resolveCoreRole($payload);
 
             if ($role === null) {
@@ -88,6 +88,7 @@ class LoginController extends Controller
                     'ip' => $request->ip(),
                     'status' => $coreResult->status(),
                     'role_id' => $payload['role_id'] ?? null,
+                    'payload_keys' => array_keys($payload),
                 ]);
 
                 return back()->withErrors([
@@ -140,7 +141,7 @@ class LoginController extends Controller
         ]);
 
         if ($coreResult->ok()) {
-            $payload = (array) $coreResult->data();
+            $payload = $this->normalizeCorePayload((array) $coreResult->data());
             $role = $this->resolveCoreRole($payload);
 
             if ($role === null) {
@@ -245,7 +246,7 @@ class LoginController extends Controller
 
     private function resolveCoreRole(array $payload): ?string
     {
-        $role = $this->normalizeRoleName((string) ($payload['rol'] ?? $payload['role'] ?? ''));
+        $role = $this->normalizeRoleName((string) ($payload['rol'] ?? $payload['role'] ?? $payload['rol_original'] ?? ''));
 
         if (in_array($role, ['admin', 'operador', 'docente', 'alumno'], true)) {
             return $role;
@@ -253,7 +254,7 @@ class LoginController extends Controller
 
         $roleId = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
 
-        return match ($roleId) {
+        $roleFromId = match ($roleId) {
             1 => 'admin',
             2 => 'operador',
             3 => 'docente',
@@ -261,6 +262,39 @@ class LoginController extends Controller
             5 => 'admin',
             default => null,
         };
+
+        if ($roleFromId !== null) {
+            return $roleFromId;
+        }
+
+        foreach (['data', 'usuario', 'user'] as $key) {
+            if (!isset($payload[$key]) || (!is_array($payload[$key]) && !is_object($payload[$key]))) {
+                continue;
+            }
+
+            $nestedRole = $this->resolveCoreRole((array) $payload[$key]);
+
+            if ($nestedRole !== null) {
+                return $nestedRole;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeCorePayload(array $payload): array
+    {
+        foreach (['data', 'usuario', 'user'] as $key) {
+            if (!isset($payload[$key])) {
+                continue;
+            }
+
+            if (is_array($payload[$key]) || is_object($payload[$key])) {
+                return array_merge($payload, (array) $payload[$key]);
+            }
+        }
+
+        return $payload;
     }
 
     private function normalizeRoleName(string $role): string
