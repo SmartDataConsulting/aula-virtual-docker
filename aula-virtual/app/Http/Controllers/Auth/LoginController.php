@@ -258,6 +258,7 @@ class LoginController extends Controller
             2 => 'operador',
             3 => 'docente',
             4 => 'alumno',
+            5 => 'admin',
             default => null,
         };
     }

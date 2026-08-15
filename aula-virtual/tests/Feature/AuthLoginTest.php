@@ -95,6 +95,34 @@ class AuthLoginTest extends TestCase
         $response->assertSessionHas(AuthSessionKeys::USER_ROLE, 'admin');
     }
 
+    public function test_email_core_login_accepts_production_admin_role_id(): void
+    {
+        config([
+            'services.api_servicios.base_url' => 'https://api.test',
+            'services.api_servicios.token' => 'internal-token',
+        ]);
+
+        Http::fake([
+            'https://api.test/v1/login' => Http::response([
+                'id' => 2,
+                'nombre' => 'Admin Produccion',
+                'email' => 'admin-prod@test.com',
+                'rol' => null,
+                'role_id' => 5,
+            ], 200),
+        ]);
+
+        $response = $this->post('/login', [
+            'username' => 'admin-prod@test.com',
+            'password' => 'secret',
+        ]);
+
+        $response->assertRedirect('/backoffice/courses');
+        $response->assertSessionHas(AuthSessionKeys::LOGGED_IN, true);
+        $response->assertSessionHas(AuthSessionKeys::USER_EMAIL, 'admin-prod@test.com');
+        $response->assertSessionHas(AuthSessionKeys::USER_ROLE, 'admin');
+    }
+
     public function test_email_core_login_with_unresolved_role_returns_form_error(): void
     {
         config([
