@@ -16,6 +16,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $trustedProxies = env('TRUSTED_PROXIES', '*');
+
+        $middleware->trustProxies(
+            at: $trustedProxies === ''
+                ? null
+                : array_map('trim', explode(',', $trustedProxies)),
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PREFIX
+        );
         $middleware->append(\App\Http\Middleware\RequestCorrelationId::class);
         $middleware->append(\App\Http\Middleware\RequestTiming::class);
         $middleware->alias([
