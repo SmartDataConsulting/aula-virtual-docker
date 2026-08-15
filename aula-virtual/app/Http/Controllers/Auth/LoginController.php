@@ -81,10 +81,18 @@ class LoginController extends Controller
 
         if ($coreResult->ok()) {
             $payload = (array) $coreResult->data();
-            $role = (string) ($payload['rol'] ?? '');
+            $role = $this->resolveCoreRole($payload);
 
-            if ($role === '') {
-                throw new \RuntimeException('Rol no enviado por CORE');
+            if ($role === null) {
+                Log::warning('Login failed (core role missing).', [
+                    'ip' => $request->ip(),
+                    'status' => $coreResult->status(),
+                    'role_id' => $payload['role_id'] ?? null,
+                ]);
+
+                return back()->withErrors([
+                    'username' => 'Tu usuario no tiene un rol configurado. Contacta a soporte.',
+                ])->onlyInput('username');
             }
 
             $this->clearLoginAttempts($username);
@@ -133,10 +141,18 @@ class LoginController extends Controller
 
         if ($coreResult->ok()) {
             $payload = (array) $coreResult->data();
-            $role = (string) ($payload['rol'] ?? '');
+            $role = $this->resolveCoreRole($payload);
 
-            if ($role === '') {
-                throw new \RuntimeException('Rol no enviado por CORE');
+            if ($role === null) {
+                Log::warning('Login failed (core role missing).', [
+                    'ip' => $request->ip(),
+                    'status' => $coreResult->status(),
+                    'role_id' => $payload['role_id'] ?? null,
+                ]);
+
+                return back()->withErrors([
+                    'username' => 'Tu usuario no tiene un rol configurado. Contacta a soporte.',
+                ])->onlyInput('username');
             }
 
             $this->clearLoginAttempts($username);
@@ -210,6 +226,8 @@ class LoginController extends Controller
 
     private function storeSessionData(Request $request, array $payload, string $role, ?string $token = null): void
     {
+        $role = $this->normalizeRoleName($role);
+
         $request->session()->regenerate();
         $request->session()->regenerateToken();
         $request->session()->put(AuthSessionKeys::LOGGED_IN, true);
@@ -222,7 +240,37 @@ class LoginController extends Controller
 
     private function redirectForRole(string $role): string
     {
-        return strtolower($role) === 'alumno' ? '/mis-cursos' : '/backoffice/courses';
+        return $this->normalizeRoleName($role) === 'alumno' ? '/mis-cursos' : '/backoffice/courses';
+    }
+
+    private function resolveCoreRole(array $payload): ?string
+    {
+        $role = $this->normalizeRoleName((string) ($payload['rol'] ?? $payload['role'] ?? ''));
+
+        if (in_array($role, ['admin', 'operador', 'docente', 'alumno'], true)) {
+            return $role;
+        }
+
+        $roleId = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
+
+        return match ($roleId) {
+            1 => 'admin',
+            2 => 'operador',
+            3 => 'docente',
+            4 => 'alumno',
+            default => null,
+        };
+    }
+
+    private function normalizeRoleName(string $role): string
+    {
+        $role = strtolower(trim($role));
+
+        return match ($role) {
+            'administrador' => 'admin',
+            'profesor' => 'docente',
+            default => $role,
+        };
     }
 
     private function resolveAuthError(int $status): string

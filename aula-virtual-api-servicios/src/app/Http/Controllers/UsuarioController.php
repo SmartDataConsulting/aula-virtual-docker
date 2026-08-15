@@ -58,11 +58,27 @@ class UsuarioController extends BaseController
             ], 401);
         }
 
+        $role = $this->resolveRole($usuario);
+
+        if ($role === null) {
+            Log::warning('login_failed_core', [
+                'reason' => 'role_missing',
+                'user_id' => $usuario->id,
+                'role_id' => isset($usuario->role_id) ? (int) $usuario->role_id : null,
+            ]);
+
+            return response()->json([
+                'error' => 'rol no configurado',
+                'reason' => 'role_missing',
+            ], 422);
+        }
+
         $data = [
             'id' => (int) $usuario->id,
             'nombre' => $usuario->nombre,
             'email' => $usuario->email,
-            'rol' => $usuario->rol,
+            'rol' => $role,
+            'rol_original' => $usuario->rol ?? null,
             'role_id' => isset($usuario->role_id) ? (int) $usuario->role_id : null,
             'colaborador_id' => isset($usuario->colaborador_id) ? (int) $usuario->colaborador_id : null,
         ];
@@ -75,5 +91,29 @@ class UsuarioController extends BaseController
         ]);
 
         return response()->json($data);
+    }
+
+    private function resolveRole(object $usuario): ?string
+    {
+        $role = strtolower(trim((string) ($usuario->rol ?? '')));
+        $role = match ($role) {
+            'administrador' => 'admin',
+            'profesor' => 'docente',
+            default => $role,
+        };
+
+        if (in_array($role, ['admin', 'operador', 'docente', 'alumno'], true)) {
+            return $role;
+        }
+
+        $roleId = isset($usuario->role_id) ? (int) $usuario->role_id : 0;
+
+        return match ($roleId) {
+            1 => 'admin',
+            2 => 'operador',
+            3 => 'docente',
+            4 => 'alumno',
+            default => null,
+        };
     }
 }

@@ -67,6 +67,64 @@ class AuthLoginTest extends TestCase
         $response->assertSessionHas(AuthSessionKeys::JWT_TOKEN, 'jwt-token');
     }
 
+    public function test_email_core_login_uses_role_id_when_role_name_is_empty(): void
+    {
+        config([
+            'services.api_servicios.base_url' => 'https://api.test',
+            'services.api_servicios.token' => 'internal-token',
+        ]);
+
+        Http::fake([
+            'https://api.test/v1/login' => Http::response([
+                'id' => 1,
+                'nombre' => 'Admin Test',
+                'email' => 'admin@test.com',
+                'rol' => null,
+                'role_id' => 1,
+            ], 200),
+        ]);
+
+        $response = $this->post('/login', [
+            'username' => 'admin@test.com',
+            'password' => 'secret',
+        ]);
+
+        $response->assertRedirect('/backoffice/courses');
+        $response->assertSessionHas(AuthSessionKeys::LOGGED_IN, true);
+        $response->assertSessionHas(AuthSessionKeys::USER_EMAIL, 'admin@test.com');
+        $response->assertSessionHas(AuthSessionKeys::USER_ROLE, 'admin');
+    }
+
+    public function test_email_core_login_with_unresolved_role_returns_form_error(): void
+    {
+        config([
+            'services.api_servicios.base_url' => 'https://api.test',
+            'services.api_servicios.token' => 'internal-token',
+        ]);
+
+        Http::fake([
+            'https://api.test/v1/login' => Http::response([
+                'id' => 1,
+                'nombre' => 'Admin Test',
+                'email' => 'admin@test.com',
+                'rol' => null,
+                'role_id' => null,
+            ], 200),
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'username' => 'admin@test.com',
+            'password' => 'secret',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('username');
+        $this->assertSame(
+            'Tu usuario no tiene un rol configurado. Contacta a soporte.',
+            session('errors')->first('username')
+        );
+    }
+
     public function test_login_failure_returns_neutral_message(): void
     {
         config([
