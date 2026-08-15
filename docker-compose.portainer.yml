@@ -59,6 +59,10 @@ services:
       - portal-storage:/var/www/storage
       - portal-bootstrap-cache:/var/www/bootstrap/cache
       - ${AULA_SECRETS_DIR:-/opt/aula-virtual/secrets}:/run/secrets/aula:ro
+    networks:
+      default:
+        aliases:
+          - portal-fpm
     healthcheck:
       test: ["CMD-SHELL", "php -r 'exit(extension_loaded(\"pdo_mysql\") && extension_loaded(\"redis\") ? 0 : 1);'"]
       interval: 30s
@@ -97,6 +101,10 @@ services:
     volumes:
       - api-storage:/var/www/storage
       - api-bootstrap-cache:/var/www/bootstrap/cache
+    networks:
+      default:
+        aliases:
+          - api-fpm
     healthcheck:
       test: ["CMD-SHELL", "php -r 'exit(extension_loaded(\"pdo_mysql\") && extension_loaded(\"redis\") ? 0 : 1);'"]
       interval: 30s
