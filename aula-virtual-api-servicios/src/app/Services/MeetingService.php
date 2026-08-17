@@ -104,7 +104,7 @@ class MeetingService
                     'candidate_count' => count($matches),
                 ]);
 
-                return null;
+                continue;
             }
         }
 
