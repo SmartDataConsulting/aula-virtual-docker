@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Helpers\DbSafe;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CursoRepository
 {
@@ -576,6 +578,96 @@ ORDER BY ce.curso ASC, ce.edicion ASC
 
     public function listarAlumnosCurso(int $cursoEdicionId, string $solicitanteCorreo = '')
     {
+        $fichaTable = $this->tableExists('Ficha_inscripcion') ? 'Ficha_inscripcion' : (
+            $this->tableExists('ficha_inscripcion') ? 'ficha_inscripcion' : null
+        );
+
+        if ($fichaTable === null) {
+            Log::warning('No se encontro tabla de ficha de inscripcion para participantes.', [
+                'course_id' => $cursoEdicionId,
+            ]);
+
+            return [];
+        }
+
+        $fichaColumns = $this->tableColumns($fichaTable);
+        $cursoColumn = $this->firstExistingColumn($fichaColumns, ['CURSO', 'curso']);
+        $grupoColumn = $this->firstExistingColumn($fichaColumns, ['grupo', 'GRUPO', 'edicion', 'EDICION']);
+
+        if ($cursoColumn === null || $grupoColumn === null) {
+            Log::warning('Ficha de inscripcion sin columnas minimas para participantes.', [
+                'course_id' => $cursoEdicionId,
+                'table' => $fichaTable,
+            ]);
+
+            return [];
+        }
+
+        $nombresColumn = $this->firstExistingColumn($fichaColumns, ['NOMBRES', 'nombres', 'nombre', 'NOMBRE']);
+        $apellidosColumn = $this->firstExistingColumn($fichaColumns, ['APELLIDOS', 'apellidos', 'apellido', 'APELLIDO']);
+        $correoColumn = $this->firstExistingColumn($fichaColumns, ['CORREO_PERSONAL', 'correo_personal', 'email', 'correo', 'CORREO']);
+        $correoCorporativoColumn = $this->firstExistingColumn($fichaColumns, ['correo_corporativo', 'CORREO_CORPORATIVO', 'email_corporativo', 'EMAIL_CORPORATIVO']);
+        $telefonoColumn = $this->firstExistingColumn($fichaColumns, ['TELEFONO', 'telefono', 'celular', 'CELULAR']);
+        $dniColumn = $this->firstExistingColumn($fichaColumns, ['DNI', 'dni', 'documento', 'DOCUMENTO']);
+        $estadoPagoColumn = $this->firstExistingColumn($fichaColumns, ['estado_pago', 'ESTADO_PAGO', 'estado', 'ESTADO']);
+
+        $nombresExpr = $this->columnExpression('fi', $nombresColumn, "''");
+        $apellidosExpr = $this->columnExpression('fi', $apellidosColumn, "''");
+        $correoExpr = $this->columnExpression('fi', $correoColumn, "''");
+        $correoCorporativoExpr = $this->columnExpression('fi', $correoCorporativoColumn);
+        $telefonoExpr = $this->columnExpression('fi', $telefonoColumn);
+        $dniExpr = $this->columnExpression('fi', $dniColumn);
+        $estadoPagoExpr = $this->columnExpression('fi', $estadoPagoColumn);
+        $cursoExpr = $this->columnExpression('fi', $cursoColumn, "''");
+        $grupoExpr = $this->columnExpression('fi', $grupoColumn, "''");
+
+        $alumnoJoin = '';
+        $contactoPublicoExpr = '0 AS contacto_publico';
+        $fotoUrlExpr = 'NULL AS foto_url';
+        $alumnoColumns = $this->tableExists('alumno') ? $this->tableColumns('alumno') : [];
+        $alumnoCorreoColumn = $this->firstExistingColumn($alumnoColumns, ['correo', 'email', 'correo_personal', 'CORREO_PERSONAL']);
+
+        if ($alumnoCorreoColumn !== null && $correoColumn !== null) {
+            $alumnoJoin = "
+            LEFT JOIN alumno a
+                ON LOWER(TRIM(CAST(" . $this->columnExpression('a', $alumnoCorreoColumn, "''") . " AS CHAR) COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(CAST($correoExpr AS CHAR) COLLATE utf8mb4_unicode_ci))
+            ";
+
+            if (in_array('contacto_publico', $alumnoColumns, true)) {
+                $contactoPublicoExpr = 'COALESCE(a.`contacto_publico`, 0) AS contacto_publico';
+            }
+
+            if (in_array('foto_url', $alumnoColumns, true)) {
+                $fotoUrlExpr = 'a.`foto_url` AS foto_url';
+            }
+        }
+
+        $bindings = [];
+        $solicitudExpr = 'NULL AS solicitud_contacto_estado';
+        $solicitudColumns = $this->tableExists('solicitud_contacto') ? $this->tableColumns('solicitud_contacto') : [];
+
+        if (
+            $correoColumn !== null
+            && in_array('curso_edicion_id', $solicitudColumns, true)
+            && in_array('solicitante_correo', $solicitudColumns, true)
+            && in_array('destinatario_correo', $solicitudColumns, true)
+            && in_array('estado', $solicitudColumns, true)
+        ) {
+            $orderColumn = in_array('fecha_solicitud', $solicitudColumns, true) ? 'fecha_solicitud' : 'id';
+            $solicitudExpr = "(
+                    SELECT sc.`estado`
+                    FROM solicitud_contacto sc
+                    WHERE sc.`curso_edicion_id` = ce.id
+                      AND LOWER(TRIM(CONVERT(sc.`solicitante_correo` USING utf8mb4) COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci))
+                      AND LOWER(TRIM(CONVERT(sc.`destinatario_correo` USING utf8mb4) COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(CAST($correoExpr AS CHAR) COLLATE utf8mb4_unicode_ci))
+                    ORDER BY sc.`$orderColumn` DESC
+                    LIMIT 1
+                ) AS solicitud_contacto_estado";
+            $bindings[] = strtolower(trim($solicitanteCorreo));
+        }
+
+        $bindings[] = $cursoEdicionId;
+
         $sql = "
             SELECT
                 ce.id AS curso_edicion_id,
@@ -584,44 +676,70 @@ ORDER BY ce.curso ASC, ce.edicion ASC
                 ce.docente,
                 ce.horario,
 
-                CRC32(CONCAT_WS('|', fi.CORREO_PERSONAL, fi.DNI, fi.NOMBRES, fi.APELLIDOS)) AS id,
-                fi.NOMBRES,
-                fi.APELLIDOS,
-                CONCAT(fi.NOMBRES, ' ', fi.APELLIDOS) AS alumno,
-                fi.CORREO_PERSONAL,
-                fi.correo_corporativo,
-                fi.TELEFONO,
-                fi.DNI,
-                fi.estado_pago,
-                COALESCE(a.contacto_publico, 0) AS contacto_publico,
-                a.foto_url,
-                (
-                    SELECT sc.estado
-                    FROM solicitud_contacto sc
-                    WHERE sc.curso_edicion_id = ce.id
-                      AND LOWER(TRIM(sc.solicitante_correo)) = LOWER(TRIM(?))
-                      AND LOWER(TRIM(sc.destinatario_correo)) = LOWER(TRIM(fi.CORREO_PERSONAL))
-                    ORDER BY sc.fecha_solicitud DESC
-                    LIMIT 1
-                ) AS solicitud_contacto_estado
+                CRC32(CONCAT_WS('|', $correoExpr, $dniExpr, $nombresExpr, $apellidosExpr)) AS id,
+                $nombresExpr AS NOMBRES,
+                $apellidosExpr AS APELLIDOS,
+                TRIM(CONCAT_WS(' ', $nombresExpr, $apellidosExpr)) AS alumno,
+                $correoExpr AS CORREO_PERSONAL,
+                $correoCorporativoExpr AS correo_corporativo,
+                $telefonoExpr AS TELEFONO,
+                $dniExpr AS DNI,
+                $estadoPagoExpr AS estado_pago,
+                $contactoPublicoExpr,
+                $fotoUrlExpr,
+                $solicitudExpr
 
             FROM curso_edicion ce
 
-            INNER JOIN Ficha_inscripcion fi
-                ON fi.CURSO COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-            AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci
+            INNER JOIN `$fichaTable` fi
+                ON LOWER(TRIM(CAST($cursoExpr AS CHAR) COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(CAST(ce.curso AS CHAR) COLLATE utf8mb4_unicode_ci))
+            AND LOWER(TRIM(CAST($grupoExpr AS CHAR) COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(CAST(ce.edicion AS CHAR) COLLATE utf8mb4_unicode_ci))
 
-            LEFT JOIN alumno a
-                ON LOWER(TRIM(a.correo)) = LOWER(TRIM(fi.CORREO_PERSONAL))
+            $alumnoJoin
 
             WHERE ce.id = ?
 
-            ORDER BY  fi.NOMBRES,fi.APELLIDOS
+            ORDER BY alumno
         ";
 
-        return DbSafe::select('mysql_cursos', $sql, [
-            strtolower(trim($solicitanteCorreo)),
-            $cursoEdicionId,
-        ]);
+        return DbSafe::select('mysql_cursos', $sql, $bindings, __METHOD__);
+    }
+
+    private function tableExists(string $table): bool
+    {
+        try {
+            return DB::connection('mysql_cursos')->getSchemaBuilder()->hasTable($table);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    private function tableColumns(string $table): array
+    {
+        try {
+            return DB::connection('mysql_cursos')->getSchemaBuilder()->getColumnListing($table);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private function firstExistingColumn(array $columns, array $candidates): ?string
+    {
+        foreach ($candidates as $candidate) {
+            if (in_array($candidate, $columns, true)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private function columnExpression(string $alias, ?string $column, string $default = 'NULL'): string
+    {
+        if ($column === null) {
+            return $default;
+        }
+
+        return $alias . '.`' . str_replace('`', '``', $column) . '`';
     }
 }
