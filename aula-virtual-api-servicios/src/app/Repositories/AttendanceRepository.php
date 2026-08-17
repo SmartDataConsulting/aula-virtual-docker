@@ -13,7 +13,7 @@ class AttendanceRepository
     public function sessionContext(int $sessionId): ?object
     {
         $rows = DbSafe::select(self::CONNECTION, <<<'SQL'
-            SELECT s.*, s.nro_sesion AS numero,
+            SELECT s.*, s.nro_sesion AS numero, s.hora_inicio_prog AS hora_inicio,
                    ce.curso AS curso_nombre, ce.edicion AS curso_edicion,
                    ce.docente AS curso_docente,
                    COALESCE(zh.email, ce.cta_zoom) AS zoom_host_email
