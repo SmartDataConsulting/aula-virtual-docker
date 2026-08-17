@@ -51,7 +51,7 @@ class AttendanceRepository
             SELECT LOWER(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo))) AS correo,
                    LOWER(TRIM(fi.correo_corporativo)) AS correo_corporativo,
                    CONCAT_WS(' ', fi.NOMBRES, fi.APELLIDOS) AS nombre
-            FROM ficha_inscripcion fi
+            FROM Ficha_inscripcion fi
             INNER JOIN curso_edicion ce
               ON ce.id = ?
              AND ((fi.curso_edicion_id = ce.id)
@@ -229,7 +229,7 @@ class AttendanceRepository
         $students = DbSafe::select(self::CONNECTION, <<<'SQL'
             SELECT LOWER(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo))) AS correo,
                    CONCAT_WS(' ', fi.NOMBRES, fi.APELLIDOS) AS nombre
-            FROM ficha_inscripcion fi
+            FROM Ficha_inscripcion fi
             INNER JOIN curso_edicion ce ON ce.id = ?
             WHERE fi.curso_edicion_id = ce.id
                OR (fi.CURSO COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
@@ -308,7 +308,7 @@ class AttendanceRepository
         $rows = DbSafe::select(self::CONNECTION, <<<'SQL'
             SELECT a.*
             FROM curso_edicion_sesion_asistencias a
-            LEFT JOIN ficha_inscripcion fi
+            LEFT JOIN Ficha_inscripcion fi
               ON a.tipo_participante = 'alumno'
              AND LOWER(TRIM(fi.CORREO_PERSONAL)) = LOWER(TRIM(a.alumno_correo))
             LEFT JOIN colaborador c ON c.id_colaborador = a.colaborador_id
@@ -597,7 +597,7 @@ class AttendanceRepository
                    COALESCE(a.estado_manual, a.estado_automatico) AS estado
             FROM curso_edicion_sesion_asistencias a
             INNER JOIN curso_edicion_sesiones s ON s.id = a.curso_edicion_sesion_id
-            LEFT JOIN ficha_inscripcion fi
+            LEFT JOIN Ficha_inscripcion fi
               ON a.tipo_participante = 'alumno'
              AND LOWER(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo))) = LOWER(TRIM(a.alumno_correo))
             WHERE s.curso_edicion_id = ? AND a.tipo_participante = 'alumno'
