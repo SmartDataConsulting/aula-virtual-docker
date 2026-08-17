@@ -369,7 +369,7 @@ class AttendanceRepository
                    e.participante_nombre, e.ocurrido_at, e.tipo_evento, s.id AS sesion_id, s.nro_sesion
             FROM curso_edicion_sesion_asistencia_eventos e
             INNER JOIN meetings m ON m.id = e.meeting_id
-            INNER JOIN curso_edicion ce ON ce.edicion = m.edicion
+            INNER JOIN curso_edicion ce ON ce.edicion COLLATE utf8mb4_unicode_ci = m.edicion COLLATE utf8mb4_unicode_ci
             INNER JOIN curso_edicion_sesiones s ON s.curso_edicion_id = ce.id AND s.nro_sesion = m.sesion
             WHERE ce.id = ? AND e.asistencia_id IS NULL AND e.fuente IN ('zoom_webhook','zoom_report')
             ORDER BY e.ocurrido_at DESC
@@ -384,7 +384,7 @@ class AttendanceRepository
                    s.id AS sesion_id, s.nro_sesion
             FROM curso_edicion_sesion_asistencia_eventos e
             INNER JOIN meetings m ON m.id = e.meeting_id
-            INNER JOIN curso_edicion ce ON ce.edicion = m.edicion
+            INNER JOIN curso_edicion ce ON ce.edicion COLLATE utf8mb4_unicode_ci = m.edicion COLLATE utf8mb4_unicode_ci
             INNER JOIN curso_edicion_sesiones s
               ON s.curso_edicion_id = ce.id AND s.nro_sesion = m.sesion
             WHERE s.id = ? AND e.asistencia_id IS NULL
@@ -415,7 +415,7 @@ class AttendanceRepository
             SELECT e.*, s.id AS sesion_id, s.curso_edicion_id
             FROM curso_edicion_sesion_asistencia_eventos e
             INNER JOIN meetings m ON m.id = e.meeting_id
-            INNER JOIN curso_edicion ce ON ce.edicion = m.edicion
+            INNER JOIN curso_edicion ce ON ce.edicion COLLATE utf8mb4_unicode_ci = m.edicion COLLATE utf8mb4_unicode_ci
             INNER JOIN curso_edicion_sesiones s
               ON s.curso_edicion_id = ce.id AND s.nro_sesion = m.sesion
             WHERE e.id = ? AND e.asistencia_id IS NULL
@@ -667,7 +667,7 @@ class AttendanceRepository
             LEFT JOIN meeting_attendance_syncs ms ON ms.meeting_id = (
                 SELECT m.id FROM meetings m
                 INNER JOIN curso_edicion ce ON ce.id = s.curso_edicion_id
-                WHERE m.status = 'activo' AND m.edicion = ce.edicion AND m.sesion = s.nro_sesion
+                WHERE m.status = 'activo' AND m.edicion COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci AND m.sesion = s.nro_sesion
                 ORDER BY ABS(TIMESTAMPDIFF(SECOND, m.date, CONCAT(s.fecha, ' ', s.hora_inicio_prog))) LIMIT 1
             )
             WHERE TIMESTAMP(s.fecha, s.hora_fin_prog) <= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
