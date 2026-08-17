@@ -190,8 +190,8 @@ class EncuestaRespuestaRepository
             SELECT 1
             FROM curso_edicion ce
             INNER JOIN Ficha_inscripcion fi
-              ON fi.curso COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-             AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci
+              ON fi.curso COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
+             AND fi.grupo COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci
             WHERE ce.id = ?
               AND LOWER(TRIM(fi.CORREO_PERSONAL)) = LOWER(TRIM(?))
             LIMIT 1

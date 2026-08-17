@@ -55,7 +55,7 @@ class ChatRepository
                 LIMIT ? OFFSET ?
             ) AS mensajes_paginados
             LEFT JOIN alumno a
-                ON LOWER(TRIM(a.correo)) COLLATE utf8mb4_general_ci = LOWER(TRIM(mensajes_paginados.usuario_id)) COLLATE utf8mb4_general_ci
+                ON LOWER(TRIM(a.correo)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(mensajes_paginados.usuario_id)) COLLATE utf8mb4_unicode_ci
             ORDER BY fecha_creacion ASC
         ", [$salaId, $limit, $offset]);
     }
@@ -66,7 +66,7 @@ class ChatRepository
             SELECT mc.*, a.foto_url
             FROM mensaje_chat mc
             LEFT JOIN alumno a
-                ON LOWER(TRIM(a.correo)) COLLATE utf8mb4_general_ci = LOWER(TRIM(mc.usuario_id)) COLLATE utf8mb4_general_ci
+                ON LOWER(TRIM(a.correo)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(mc.usuario_id)) COLLATE utf8mb4_unicode_ci
             WHERE mc.id = ?
             LIMIT 1
         ", [$mensajeId]);
@@ -140,7 +140,7 @@ class ChatRepository
             SELECT mc.*, a.foto_url
             FROM mensaje_chat mc
             LEFT JOIN alumno a
-                ON LOWER(TRIM(a.correo)) COLLATE utf8mb4_general_ci = LOWER(TRIM(mc.usuario_id)) COLLATE utf8mb4_general_ci
+                ON LOWER(TRIM(a.correo)) COLLATE utf8mb4_unicode_ci = LOWER(TRIM(mc.usuario_id)) COLLATE utf8mb4_unicode_ci
             WHERE mc.sala_id = ?
               AND mc.fijado = TRUE
               AND mc.eliminado = FALSE

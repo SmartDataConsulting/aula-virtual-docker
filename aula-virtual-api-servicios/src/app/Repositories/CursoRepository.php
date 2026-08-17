@@ -87,13 +87,13 @@ public function listarCursosAlumno(string $correo)
         FROM Ficha_inscripcion e
 
         JOIN curso_edicion c 
-          ON c.curso COLLATE utf8mb4_general_ci = e.curso COLLATE utf8mb4_general_ci 
-         AND c.edicion COLLATE utf8mb4_general_ci = e.grupo COLLATE utf8mb4_general_ci
+          ON c.curso COLLATE utf8mb4_unicode_ci = e.curso COLLATE utf8mb4_unicode_ci 
+         AND c.edicion COLLATE utf8mb4_unicode_ci = e.grupo COLLATE utf8mb4_unicode_ci
 
         LEFT JOIN curso_edicion_sesiones s 
           ON s.curso_edicion_id = c.id
 
-        WHERE e.CORREO_PERSONAL COLLATE utf8mb4_general_ci = ?
+        WHERE e.CORREO_PERSONAL COLLATE utf8mb4_unicode_ci = ?
           AND c.estadocurso IN ('en curso','programado','finalizado')
 
         GROUP BY 
@@ -119,9 +119,9 @@ public function listarCursosSugeridosAlumno(string $correo): array
             c.estadocurso
         FROM Ficha_inscripcion e
         JOIN curso_edicion c
-          ON c.curso COLLATE utf8mb4_general_ci = e.curso COLLATE utf8mb4_general_ci
-         AND c.edicion COLLATE utf8mb4_general_ci = e.grupo COLLATE utf8mb4_general_ci
-        WHERE e.CORREO_PERSONAL COLLATE utf8mb4_general_ci = ?
+          ON c.curso COLLATE utf8mb4_unicode_ci = e.curso COLLATE utf8mb4_unicode_ci
+         AND c.edicion COLLATE utf8mb4_unicode_ci = e.grupo COLLATE utf8mb4_unicode_ci
+        WHERE e.CORREO_PERSONAL COLLATE utf8mb4_unicode_ci = ?
           AND c.estadocurso IN ('en curso','programado','finalizado')
     ";
 
@@ -149,9 +149,9 @@ public function listarCursosSugeridosAlumno(string $correo): array
           AND NOT EXISTS (
             SELECT 1
             FROM Ficha_inscripcion e
-            WHERE e.CORREO_PERSONAL COLLATE utf8mb4_general_ci = ?
-              AND e.curso COLLATE utf8mb4_general_ci = c.curso COLLATE utf8mb4_general_ci
-              AND e.grupo COLLATE utf8mb4_general_ci = c.edicion COLLATE utf8mb4_general_ci
+            WHERE e.CORREO_PERSONAL COLLATE utf8mb4_unicode_ci = ?
+              AND e.curso COLLATE utf8mb4_unicode_ci = c.curso COLLATE utf8mb4_unicode_ci
+              AND e.grupo COLLATE utf8mb4_unicode_ci = c.edicion COLLATE utf8mb4_unicode_ci
           )
         GROUP BY
             c.id,
@@ -335,14 +335,14 @@ public function listarCursosBackoffice(string $correo, string $rol)
 
         LEFT JOIN (
             SELECT
-                curso COLLATE utf8mb4_general_ci AS curso,
-                grupo COLLATE utf8mb4_general_ci AS edicion,
+                curso COLLATE utf8mb4_unicode_ci AS curso,
+                grupo COLLATE utf8mb4_unicode_ci AS edicion,
                 COUNT(DISTINCT CORREO_PERSONAL) AS inscritos
             FROM Ficha_inscripcion
-            GROUP BY curso COLLATE utf8mb4_general_ci, grupo COLLATE utf8mb4_general_ci
+            GROUP BY curso COLLATE utf8mb4_unicode_ci, grupo COLLATE utf8mb4_unicode_ci
         ) ins
-        ON ins.curso = ce.curso COLLATE utf8mb4_general_ci
-        AND ins.edicion = ce.edicion COLLATE utf8mb4_general_ci
+        ON ins.curso = ce.curso COLLATE utf8mb4_unicode_ci
+        AND ins.edicion = ce.edicion COLLATE utf8mb4_unicode_ci
 
         LEFT JOIN (
             SELECT 
@@ -414,14 +414,14 @@ LEFT JOIN usuario u
 
 LEFT JOIN (
     SELECT
-        curso COLLATE utf8mb4_general_ci AS curso,
-        grupo COLLATE utf8mb4_general_ci AS edicion,
+        curso COLLATE utf8mb4_unicode_ci AS curso,
+        grupo COLLATE utf8mb4_unicode_ci AS edicion,
         COUNT(DISTINCT CORREO_PERSONAL) AS inscritos
     FROM Ficha_inscripcion
-    GROUP BY curso COLLATE utf8mb4_general_ci, grupo COLLATE utf8mb4_general_ci
+    GROUP BY curso COLLATE utf8mb4_unicode_ci, grupo COLLATE utf8mb4_unicode_ci
 ) ins
-    ON ins.curso = ce.curso COLLATE utf8mb4_general_ci
-   AND ins.edicion = ce.edicion COLLATE utf8mb4_general_ci
+    ON ins.curso = ce.curso COLLATE utf8mb4_unicode_ci
+   AND ins.edicion = ce.edicion COLLATE utf8mb4_unicode_ci
 
 WHERE ce.activo = 1
   AND ce.estadocurso = 'en curso'
@@ -487,14 +487,14 @@ LEFT JOIN usuario u
 
 LEFT JOIN (
     SELECT
-        curso COLLATE utf8mb4_general_ci AS curso,
-        grupo COLLATE utf8mb4_general_ci AS edicion,
+        curso COLLATE utf8mb4_unicode_ci AS curso,
+        grupo COLLATE utf8mb4_unicode_ci AS edicion,
         COUNT(DISTINCT CORREO_PERSONAL) AS inscritos
     FROM Ficha_inscripcion
-    GROUP BY curso COLLATE utf8mb4_general_ci, grupo COLLATE utf8mb4_general_ci
+    GROUP BY curso COLLATE utf8mb4_unicode_ci, grupo COLLATE utf8mb4_unicode_ci
 ) ins
-  ON ins.curso = ce.curso COLLATE utf8mb4_general_ci
- AND ins.edicion = ce.edicion COLLATE utf8mb4_general_ci
+  ON ins.curso = ce.curso COLLATE utf8mb4_unicode_ci
+ AND ins.edicion = ce.edicion COLLATE utf8mb4_unicode_ci
 
 LEFT JOIN (
     SELECT

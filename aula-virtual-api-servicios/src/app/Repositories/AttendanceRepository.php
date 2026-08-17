@@ -55,12 +55,12 @@ class AttendanceRepository
             INNER JOIN curso_edicion ce
               ON ce.id = ?
              AND ((fi.curso_edicion_id = ce.id)
-               OR (fi.CURSO COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-               AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci))
-            WHERE LOWER(TRIM(fi.CORREO_PERSONAL)) = LOWER(TRIM(?))
-               OR LOWER(TRIM(fi.correo_corporativo)) = LOWER(TRIM(?))
-            ORDER BY fi.id DESC
-            LIMIT 1
+               OR (fi.CURSO COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
+              AND fi.grupo COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci))
+           WHERE LOWER(TRIM(fi.CORREO_PERSONAL)) = LOWER(TRIM(?))
+              OR LOWER(TRIM(fi.correo_corporativo)) = LOWER(TRIM(?))
+           ORDER BY fi.id DESC
+           LIMIT 1
         SQL, [$courseId, $email, $email]);
 
         return $rows[0] ?? null;
@@ -158,7 +158,7 @@ class AttendanceRepository
                 SELECT ce2.id AS course_id, COUNT(DISTINCT e.id) AS unresolved_count
                 FROM curso_edicion_sesion_asistencia_eventos e
                 INNER JOIN meetings m ON m.id = e.meeting_id
-                INNER JOIN curso_edicion ce2 ON ce2.edicion = m.edicion
+                INNER JOIN curso_edicion ce2 ON ce2.edicion COLLATE utf8mb4_unicode_ci = m.edicion COLLATE utf8mb4_unicode_ci
                 INNER JOIN curso_edicion_sesiones s2
                     ON s2.curso_edicion_id = ce2.id AND s2.nro_sesion = m.sesion
                 WHERE e.asistencia_id IS NULL AND e.fuente IN ('zoom_webhook', 'zoom_report')
@@ -170,9 +170,9 @@ class AttendanceRepository
                 INNER JOIN colaborador c ON c.id_colaborador = sx.docente_id
                 LEFT JOIN usuario u ON u.colaborador_id = c.id_colaborador AND u.activo = 1
                 WHERE sx.curso_edicion_id = ce.id
-                  AND (LOWER(TRIM(c.correo_corporativo)) = LOWER(TRIM(?))
-                    OR LOWER(TRIM(c.correo_personal)) = LOWER(TRIM(?))
-                    OR LOWER(TRIM(u.email)) = LOWER(TRIM(?)))
+                  AND (LOWER(TRIM(c.correo_corporativo COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(?))
+                    OR LOWER(TRIM(c.correo_personal COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(?))
+                    OR LOWER(TRIM(u.email COLLATE utf8mb4_unicode_ci)) = LOWER(TRIM(?)))
             ))
             GROUP BY ce.id
         SQL, [$isAdmin, $email, $email, $email]);
@@ -212,7 +212,7 @@ class AttendanceRepository
                 SELECT s2.id AS session_id, COUNT(DISTINCT e.id) AS unresolved_count
                 FROM curso_edicion_sesion_asistencia_eventos e
                 INNER JOIN meetings m ON m.id = e.meeting_id
-                INNER JOIN curso_edicion ce2 ON ce2.edicion = m.edicion
+                INNER JOIN curso_edicion ce2 ON ce2.edicion COLLATE utf8mb4_unicode_ci = m.edicion COLLATE utf8mb4_unicode_ci
                 INNER JOIN curso_edicion_sesiones s2
                     ON s2.curso_edicion_id = ce2.id AND s2.nro_sesion = m.sesion
                 WHERE e.asistencia_id IS NULL AND e.fuente IN ('zoom_webhook', 'zoom_report')
@@ -232,8 +232,8 @@ class AttendanceRepository
             FROM ficha_inscripcion fi
             INNER JOIN curso_edicion ce ON ce.id = ?
             WHERE fi.curso_edicion_id = ce.id
-               OR (fi.CURSO COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-               AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci)
+               OR (fi.CURSO COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
+               AND fi.grupo COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci)
             GROUP BY LOWER(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo))), fi.NOMBRES, fi.APELLIDOS
         SQL, [(int) $session->curso_edicion_id]);
 

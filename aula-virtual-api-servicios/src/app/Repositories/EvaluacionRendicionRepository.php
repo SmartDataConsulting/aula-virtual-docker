@@ -28,8 +28,8 @@ class EvaluacionRendicionRepository
                AND ce.activo = 1
             INNER JOIN Ficha_inscripcion fi
                 ON fi.curso_edicion_id = ce.id
-                OR (fi.curso COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-                AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci)
+                OR (fi.curso COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
+                AND fi.grupo COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci)
             WHERE e.id = ?
             AND LOWER(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo))) = LOWER(TRIM(?))
             LIMIT 1
@@ -1222,13 +1222,13 @@ class EvaluacionRendicionRepository
                     ON ult.max_id = er1.id
             ) r
                 ON r.evaluacion_id = e.id
-            AND r.alumno_correo COLLATE utf8mb4_general_ci =
-                CAST(? AS CHAR) COLLATE utf8mb4_general_ci
+            AND r.alumno_correo COLLATE utf8mb4_unicode_ci =
+                CAST(? AS CHAR) COLLATE utf8mb4_unicode_ci
 
             LEFT JOIN evaluacion_rendicion te
                 ON te.evaluacion_id = e.id
-            AND te.alumno_correo COLLATE utf8mb4_general_ci =
-                CAST(? AS CHAR) COLLATE utf8mb4_general_ci
+            AND te.alumno_correo COLLATE utf8mb4_unicode_ci =
+                CAST(? AS CHAR) COLLATE utf8mb4_unicode_ci
             AND te.estado = 'corregido'
 
             LEFT JOIN evaluacion_rendicion_calificacion tc
@@ -1277,8 +1277,8 @@ class EvaluacionRendicionRepository
 
             LEFT JOIN evaluacion_rendicion te
                 ON te.evaluacion_id = e.id
-            AND te.alumno_correo COLLATE utf8mb4_general_ci =
-                CAST(? AS CHAR) COLLATE utf8mb4_general_ci
+            AND te.alumno_correo COLLATE utf8mb4_unicode_ci =
+                CAST(? AS CHAR) COLLATE utf8mb4_unicode_ci
             AND te.estado = 'corregido'
 
             LEFT JOIN evaluacion_rendicion_calificacion tc

@@ -84,10 +84,10 @@ public function obtenerDashboardCalificacionesCurso(int $cursoEdicionId)
                 COUNT(DISTINCT fi.CORREO_PERSONAL) AS alumnos_total
             FROM curso_edicion ce2
             INNER JOIN Ficha_inscripcion fi
-                ON fi.curso COLLATE utf8mb4_general_ci =
-                   ce2.curso COLLATE utf8mb4_general_ci
-               AND fi.grupo COLLATE utf8mb4_general_ci =
-                   ce2.edicion COLLATE utf8mb4_general_ci
+                ON fi.curso COLLATE utf8mb4_unicode_ci =
+                   ce2.curso COLLATE utf8mb4_unicode_ci
+               AND fi.grupo COLLATE utf8mb4_unicode_ci =
+                   ce2.edicion COLLATE utf8mb4_unicode_ci
             WHERE ce2.activo = 1
               AND ce2.estadocurso IN ('en curso', 'programado')
             GROUP BY ce2.id
@@ -683,8 +683,8 @@ FROM Ficha_inscripcion fi
 
 LEFT JOIN evaluacion_rendicion er
     ON er.evaluacion_id = ?
-   AND er.alumno_correo COLLATE utf8mb4_general_ci =
-       fi.CORREO_PERSONAL COLLATE utf8mb4_general_ci
+   AND er.alumno_correo COLLATE utf8mb4_unicode_ci =
+       fi.CORREO_PERSONAL COLLATE utf8mb4_unicode_ci
 
 LEFT JOIN evaluacion_rendicion_calificacion etc
     ON etc.rendicion_id = er.id

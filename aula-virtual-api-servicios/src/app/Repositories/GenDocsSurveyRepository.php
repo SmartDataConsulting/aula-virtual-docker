@@ -123,8 +123,8 @@ class GenDocsSurveyRepository
              FROM curso_edicion ce
              INNER JOIN Ficha_inscripcion fi
                ON fi.curso_edicion_id = ce.id
-               OR (fi.curso COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-               AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci)
+               OR (fi.curso COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
+               AND fi.grupo COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci)
              WHERE ce.id = ?
                AND LOWER(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo))) = ?
              LIMIT 1",
@@ -227,8 +227,8 @@ class GenDocsSurveyRepository
              FROM curso_edicion ce
              INNER JOIN Ficha_inscripcion fi
                ON fi.curso_edicion_id = ce.id
-               OR (fi.curso COLLATE utf8mb4_general_ci = ce.curso COLLATE utf8mb4_general_ci
-               AND fi.grupo COLLATE utf8mb4_general_ci = ce.edicion COLLATE utf8mb4_general_ci)
+               OR (fi.curso COLLATE utf8mb4_unicode_ci = ce.curso COLLATE utf8mb4_unicode_ci
+               AND fi.grupo COLLATE utf8mb4_unicode_ci = ce.edicion COLLATE utf8mb4_unicode_ci)
              WHERE ce.id = ?
                AND NULLIF(TRIM(COALESCE(NULLIF(fi.CORREO_PERSONAL, ''), fi.correo_corporativo)), '') IS NOT NULL",
             [$courseId]
