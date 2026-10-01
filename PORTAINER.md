@@ -1,6 +1,8 @@
-# Deploy Con Portainer Y Nginx Proxy Manager
+# Alternativa De Deploy Con Portainer Y Nginx Proxy Manager
 
-Esta guia adapta el despliegue de Aula Virtual para un VPS que ya tiene Portainer y Nginx Proxy Manager ocupando los puertos `80` y `443`.
+Esta guia documenta una alternativa para un VPS que ya tiene Portainer y Nginx Proxy Manager ocupando los puertos `80` y `443`. El procedimiento canonico comprobado usa `/opt/aula-virtual/docker-compose.prod.yml`, proyecto `aula-virtual-prod`, rama `master` del repositorio GitHub.
+
+`docker-compose.portainer.yml` no es el Compose productivo oficial y no sustituye el procedimiento canonico.
 
 ## Recomendacion
 
@@ -18,7 +20,10 @@ Ruta recomendada en el VPS:
   .env.portal
   .env.api
   secrets/
-    google-service-account.json
+    portal/
+      google-service-account.json
+    api/
+      google-service-account.json
 ```
 
 ## Preparar Archivos En El VPS
@@ -57,14 +62,22 @@ docker run --rm php:8.2-cli php -r "echo 'base64:'.base64_encode(random_bytes(32
 
 Pon una key en `.env.portal` y otra en `.env.api` si tu API usa `APP_KEY`.
 
-Copia el service account:
+Copia las credenciales fuera de Git. Portal y API pueden usar cuentas diferentes:
 
 ```bash
-cp /ruta/segura/google-service-account.json /opt/aula-virtual/secrets/google-service-account.json
-chmod 600 /opt/aula-virtual/secrets/google-service-account.json
+mkdir -p /opt/aula-virtual/secrets/portal /opt/aula-virtual/secrets/api
+cp /ruta/segura/credencial-portal.json /opt/aula-virtual/secrets/portal/google-service-account.json
+cp /ruta/segura/credencial-api.json /opt/aula-virtual/secrets/api/google-service-account.json
+sudo chown 33:33 /opt/aula-virtual/secrets/portal/google-service-account.json /opt/aula-virtual/secrets/api/google-service-account.json
+sudo chmod 600 /opt/aula-virtual/secrets/portal/google-service-account.json /opt/aula-virtual/secrets/api/google-service-account.json
+stat -c '%n uid=%u gid=%g mode=%a' /opt/aula-virtual/secrets/portal/google-service-account.json /opt/aula-virtual/secrets/api/google-service-account.json
 ```
 
-## Stack Recomendado
+Las imagenes PHP actuales ejecutan los workers PHP-FPM como `www-data`, UID/GID `33:33`. Los archivos montados con `chmod 600` deben pertenecer numericamente a `33:33`; de otro modo el proceso web no podra leerlos aunque el entrypoint del contenedor arranque como root. Si cambia la imagen base, vuelve a comprobar el UID/GID. Despues de desplegar, abre la consola de cada contenedor PHP en Portainer con usuario `33:33` y ejecuta `test -r` sobre su propia ruta bajo `/run/secrets`; el comando no debe imprimir el archivo.
+
+Si el pipeline GitLab se habilita explicitamente en el futuro, su preflight comprobara en el VPS una credencial independiente para portal y otra para API mediante `AULA_PORTAL_SECRETS_DIR` y `AULA_API_SECRETS_DIR`. Las credenciales no se copian ni se almacenan en GitLab.
+
+## Stack Recomendado Para Esta Alternativa
 
 Usa `docker-compose.portainer.yml`. Esta variante no levanta Caddy y publica solo el portal en el puerto interno `8010`, dejando `80/443` para Nginx Proxy Manager.
 
@@ -79,17 +92,18 @@ Usa `docker-compose.portainer.yml`. Esta variante no levanta Caddy y publica sol
 PORTAL_HTTP_PORT=8010
 ```
 
-No necesitas definir `PORTAL_ENV_FILE`, `API_ENV_FILE` ni `AULA_SECRETS_DIR` en el VPS si usas la ruta recomendada `/opt/aula-virtual`; el compose ya tiene esos valores por defecto.
+No necesitas definir `PORTAL_ENV_FILE`, `API_ENV_FILE`, `AULA_PORTAL_SECRETS_DIR` ni `AULA_API_SECRETS_DIR` si usas la estructura recomendada; el compose ya tiene esos valores por defecto.
 
 7. Antes de desplegar, confirma que existen:
 
 ```bash
 /opt/aula-virtual/.env.portal
 /opt/aula-virtual/.env.api
-/opt/aula-virtual/secrets/google-service-account.json
+/opt/aula-virtual/secrets/portal/google-service-account.json
+/opt/aula-virtual/secrets/api/google-service-account.json
 ```
 
-El compose ya usa rutas absolutas para `.env.portal`, `.env.api` y `secrets/`, por eso funciona aunque Portainer despliegue desde una ruta temporal.
+El compose usa rutas absolutas para `.env.portal`, `.env.api` y ambos directorios de secretos. En `.env.portal` usa `/run/secrets/aula-portal/google-service-account.json`; en `.env.api`, `/run/secrets/aula-api/google-service-account.json`. Los mounts son de solo lectura y cada aplicacion ve unicamente su directorio.
 
 ## Primer Deploy
 
@@ -108,7 +122,7 @@ docker compose -f /opt/aula-virtual/docker-compose.portainer.yml ps
 
 O desde Portainer:
 
-- Stack `aula-virtual`.
+- Stack `aula-virtual-prod`.
 - Revisa que todos los servicios esten `running`.
 - Revisa logs de `portal`, `api`, `portal-nginx` y `api-nginx`.
 
@@ -208,12 +222,20 @@ Si usas Git:
 
 ```bash
 cd /opt/aula-virtual
-git pull
+git status --short --untracked-files=no
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "ERROR: existen cambios tracked locales; abortando actualizacion." >&2
+  exit 1
+fi
+
+git fetch origin master
+git pull --ff-only origin master
 ```
 
 2. En Portainer:
 
-- Stack `aula-virtual`.
+- Stack `aula-virtual-prod`.
 - `Editor`.
 - `Update the stack`.
 - Activar `Re-pull image and redeploy` si aplica.
@@ -226,41 +248,11 @@ docker compose -f docker-compose.portainer.yml build
 docker compose -f docker-compose.portainer.yml up -d
 ```
 
-## Actualizacion Automatica Desde GitLab
+## GitLab No Opera Actualmente Esta Alternativa
 
-Para produccion se recomienda que Portainer administre los contenedores, pero que GitLab CI ejecute el deploy por SSH. Asi el pipeline puede validar, desplegar, optimizar y hacer healthchecks.
+GitHub es el repositorio canonico y el GitLab self-hosted no opera actualmente Aula Virtual. El `.gitlab-ci.yml` raiz se conserva inactivo y preparado con `master` y `docker-compose.prod.yml`; no automatiza esta variante Portainer.
 
-Configura el repo raiz `aula-virtual-docker` en GitLab y usa el `.gitlab-ci.yml` de la raiz. Los pipelines internos de `aula-virtual` y `aula-virtual-api-servicios` estan obsoletos.
-
-Variables necesarias en GitLab:
-
-```text
-VPS_HOST=IP_O_HOST_DEL_VPS
-VPS_USER=root
-VPS_SSH_PRIVATE_KEY=CLAVE_PRIVADA_DEL_DEPLOY
-DEPLOY_PATH=/opt/aula-virtual
-PROD_BRANCH=main
-PRODUCTION_URL=https://aula.tudominio.com
-```
-
-El runner debe tener acceso a Docker y SSH, con tag:
-
-```text
-deploy-aula-prod
-```
-
-Cuando hagas merge o push a `main`, GitLab ejecutara:
-
-```bash
-cd /opt/aula-virtual
-git fetch origin main
-git reset --hard origin/main
-docker compose --env-file .env.deploy -f docker-compose.portainer.yml up -d --build --remove-orphans
-```
-
-Despues ejecutara cache de Laravel/Lumen y validara `/login` y `api-nginx/up`.
-
-Las migraciones quedan en el job manual `migrate_production`. Antes de ejecutarlo, respalda `u937232440_sd_core`. No se ejecutan migraciones sobre WordPress.
+Una habilitacion futura exigiria una decision separada, mirror o repositorio GitLab, variables protegidas y un runner autorizado. Los pipelines internos de `aula-virtual` y `aula-virtual-api-servicios` siguen obsoletos. No configures automatizacion productiva desde esta guia.
 
 ## Validacion Rapida
 
@@ -287,7 +279,7 @@ Desde el navegador:
 
 ## Notas Importantes
 
-- No subas `.env.portal`, `.env.api`, `.env.deploy` ni `secrets/google-service-account.json` al repositorio.
+- No subas `.env.portal`, `.env.api`, `.env.deploy` ni ningun archivo dentro de `secrets/portal` o `secrets/api` al repositorio.
 - El API debe quedar interno. No publiques `api-nginx` con puerto externo.
 - Nginx Proxy Manager es quien maneja SSL. No uses Caddy en este VPS para Aula.
 - Si aparece `502 Bad Gateway`, revisa primero logs de `portal`, `portal-nginx` y la configuracion del Proxy Host.

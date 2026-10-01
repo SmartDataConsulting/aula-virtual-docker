@@ -5,7 +5,7 @@ deprecated_pipeline:
   stage: deprecated
   script:
     - echo "Este pipeline interno esta obsoleto."
-    - echo "Usa el .gitlab-ci.yml de la raiz aula-virtual-docker para deploy a produccion."
+    - echo "GitHub/master es canonico; el pipeline raiz se conserva preparado pero inactivo."
   rules:
     - when: manual
       allow_failure: true

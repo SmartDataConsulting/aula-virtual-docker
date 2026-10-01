@@ -1,3 +1,5 @@
+> Nota: este README conserva contenido generado por el bootstrap GitLab original y no describe el flujo productivo actual. El repositorio canonico es GitHub, la rama es `master` y el despliegue oficial se documenta en el repositorio raiz mediante `docker-compose.prod.yml`. Las instrucciones GitLab/`main` incluidas mas abajo son legacy y no deben ejecutarse.
+
 ## Prueba deploy automatico
 
 ## Prueba deploy automatico II

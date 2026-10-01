@@ -1,8 +1,8 @@
 # Deploy A VPS - Aula Virtual
 
-Esta carpeta contiene el despliegue productivo de `aula-virtual` y `aula-virtual-api-servicios` con Docker Compose, PHP-FPM, Nginx, Redis, workers y scheduler.
+Esta carpeta contiene el despliegue productivo de `aula-virtual` y `aula-virtual-api-servicios` con Docker Compose, PHP-FPM, Nginx, Redis, workers y scheduler. El repositorio canonico esta en GitHub, la rama productiva es `master`, el working directory del VPS es `/opt/aula-virtual` y el proyecto Compose es `aula-virtual-prod`.
 
-Si tu VPS usa Portainer con Nginx Proxy Manager, usa `docker-compose.portainer.yml` y la guia `PORTAINER.md`.
+El Compose productivo oficial es `docker-compose.prod.yml`. Si un entorno alternativo usa Portainer con Nginx Proxy Manager, consulta `PORTAINER.md`; esa variante no sustituye el procedimiento canonico.
 
 ## Arquitectura
 
@@ -13,9 +13,11 @@ Si tu VPS usa Portainer con Nginx Proxy Manager, usa `docker-compose.portainer.y
 - `redis`: cache, sesiones y colas.
 - `portal-worker` y `api-worker`: workers de colas.
 - `portal-scheduler` y `api-scheduler`: scheduler cada minuto.
-- `reverse-proxy`: Caddy publico con HTTPS.
+- `reverse-proxy`: Caddy opcional, disponible unicamente mediante el profile `caddy`.
 
 El API no se expone publicamente. El portal lo consume por la red interna Docker usando `http://api-nginx`.
+
+El stack productivo actualmente verificado no ejecuta ningun contenedor Caddy. `portal-nginx` se publica en `127.0.0.1:8010` para que un proxy externo gestione HTTPS. Caddy solo forma parte del Compose cuando un operador habilita explicitamente el profile `caddy` en otro escenario.
 
 ## Archivos Importantes
 
@@ -23,7 +25,7 @@ El API no se expone publicamente. El portal lo consume por la red interna Docker
 - `.env.deploy.example`: dominio publico.
 - `.env.portal.example`: variables del portal.
 - `.env.api.example`: variables del API.
-- `secrets/`: secretos montados en solo lectura, por ejemplo `google-service-account.json`.
+- `secrets/portal/` y `secrets/api/`: credenciales externas a Git, montadas en solo lectura y separadas por aplicacion.
 - `aula-virtual/Dockerfile.prod`: imagen PHP-FPM del portal.
 - `aula-virtual/Dockerfile.nginx.prod`: imagen Nginx del portal con assets Vite.
 - `aula-virtual-api-servicios/docker/php/Dockerfile.prod`: imagen PHP-FPM del API.
@@ -72,13 +74,25 @@ docker run --rm php:8.2-cli php -r "echo 'base64:'.base64_encode(random_bytes(32
 
 Usa una key para `.env.portal` y otra para `.env.api` si el API la requiere.
 
-6. Copiar secretos:
+6. Copiar los secretos. Portal y API pueden usar cuentas distintas; no reutilices el mismo archivo sin confirmarlo:
 
 ```bash
-mkdir -p secrets
-cp /ruta/segura/google-service-account.json secrets/google-service-account.json
-chmod 600 secrets/google-service-account.json
+mkdir -p secrets/portal secrets/api
+cp /ruta/segura/credencial-portal.json secrets/portal/google-service-account.json
+cp /ruta/segura/credencial-api.json secrets/api/google-service-account.json
+sudo chown 33:33 secrets/portal/google-service-account.json secrets/api/google-service-account.json
+sudo chmod 600 secrets/portal/google-service-account.json secrets/api/google-service-account.json
+stat -c '%n uid=%u gid=%g mode=%a' secrets/portal/google-service-account.json secrets/api/google-service-account.json
 ```
+
+Las imagenes PHP actuales ejecutan los workers PHP-FPM como `www-data`, UID/GID `33:33`. Como el bind mount conserva el propietario numerico del host, `chmod 600` solo permite la lectura si cada archivo pertenece a `33:33`; que el entrypoint arranque como root no cambia el usuario que atiende las solicitudes. Si se actualiza la imagen base, confirma de nuevo el UID/GID antes de aplicar `chown`. Tras levantar los servicios, verifica sin imprimir contenido:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.deploy exec -T --user 33:33 portal test -r /run/secrets/aula-portal/google-service-account.json
+docker compose -f docker-compose.prod.yml --env-file .env.deploy exec -T --user 33:33 api test -r /run/secrets/aula-api/google-service-account.json
+```
+
+Configura `GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH=/run/secrets/aula-portal/google-service-account.json` en `.env.portal` y `GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH=/run/secrets/aula-api/google-service-account.json` en `.env.api`. Las rutas absolutas se conservan; fuera de Docker tambien se admiten rutas relativas a la raiz de cada aplicacion. El build y el arranque no autentican contra Google, pero una operacion de Drive devuelve un error controlado si el archivo falta o es invalido.
 
 ## Construir
 
@@ -168,7 +182,15 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy logs -f --tail=
 Actualizar version:
 
 ```bash
-git pull
+git status --short --untracked-files=no
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "ERROR: existen cambios tracked locales; abortando actualizacion." >&2
+  exit 1
+fi
+
+git fetch origin master
+git pull --ff-only origin master
 docker compose -f docker-compose.prod.yml --env-file .env.deploy build
 docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d
 docker compose -f docker-compose.prod.yml --env-file .env.deploy exec portal php artisan config:cache
@@ -188,8 +210,19 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy exec api php ar
 - OPcache con `validate_timestamps=0`.
 - `client_max_body_size` soporta videos grandes.
 - MySQL usa usuario productivo, no `root`.
-- `secrets/google-service-account.json` no esta en Git.
+- `secrets/portal/google-service-account.json` y `secrets/api/google-service-account.json` no estan en Git ni en las imagenes.
 - Backups de base de datos, envs y secretos configurados.
+
+## Rotar Credenciales De Google Drive
+
+1. Crea credenciales sustitutas fuera del repositorio y revisa sus permisos minimos en Google Cloud.
+2. Instala cada archivo en su directorio de secretos y conserva temporalmente la credencial anterior fuera de Git para rollback.
+3. Reconstruye los contenedores, regenera `config:cache` y reinicia los procesos que usan la configuracion.
+4. Valida OAuth, subida resumible, consulta y eliminacion controlada desde portal y API.
+5. Revoca las claves anteriores en Google Cloud solo despues de validar el reemplazo.
+6. Reinicia los servicios o elimina exclusivamente las entradas de cache OAuth de Drive para no conservar tokens emitidos con la clave anterior.
+
+La revocacion, la revision de logs de Google y cualquier limpieza de historial Git son acciones externas y separadas del despliegue de codigo.
 
 ## Rollback
 
@@ -204,49 +237,13 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d
 
 Si una migracion fallo despues de modificar datos, restaurar el backup de base antes de levantar la version anterior.
 
-## Deploy Automatico Con GitLab CI
+## Pipeline GitLab Conservado, Actualmente Inactivo
 
-El repo raiz `aula-virtual-docker` incluye un `.gitlab-ci.yml` para desplegar produccion por SSH cada vez que se actualiza `main`.
+GitHub es el repositorio canonico y el despliegue productivo actual no depende de GitLab. El `.gitlab-ci.yml` se conserva preparado para una habilitacion futura explicita, con defaults `PROD_BRANCH=master` y `COMPOSE_FILE=docker-compose.prod.yml`.
 
-### Variables En GitLab
+La sola presencia del archivo no habilita el pipeline actual: requeriria configurar deliberadamente un mirror o repositorio GitLab, variables protegidas, credenciales SSH y un runner con tag `deploy-aula-prod`. Los jobs productivos tambien estan limitados por reglas a la rama configurada. No configures esos componentes como parte del procedimiento manual actual.
 
-Configura estas variables en GitLab como `Protected` y, cuando aplique, `Masked`:
-
-```text
-VPS_HOST=IP_O_HOST_DEL_VPS
-VPS_USER=root
-VPS_SSH_PRIVATE_KEY=CLAVE_PRIVADA_DEL_DEPLOY
-DEPLOY_PATH=/opt/aula-virtual
-PROD_BRANCH=main
-PRODUCTION_URL=https://aula.tudominio.com
-```
-
-El runner debe tener el tag:
-
-```text
-deploy-aula-prod
-```
-
-### Flujo
-
-El pipeline hace:
-
-1. Construccion de imagenes productivas del portal y API.
-2. Pruebas del portal y API en contenedores aislados, sin publicar puertos.
-3. Deploy por SSH:
-
-```bash
-git fetch origin main
-git reset --hard origin/main
-docker compose --env-file .env.deploy -f docker-compose.portainer.yml up -d --build --remove-orphans
-```
-
-4. Cache de configuracion, rutas y vistas.
-5. Healthcheck de `/login` y `http://api-nginx/up`.
-
-### Migraciones
-
-El job `migrate_production` es manual. Antes de ejecutarlo, respalda `u937232440_sd_core`. Este job corre migraciones solo dentro del contenedor `api` y nunca toca la base WordPress `u937232440_WPVF9`.
+El job `migrate_production` permanece manual y, si el pipeline se habilita en el futuro, debe ejecutarse solo despues de respaldar `u937232440_sd_core`. Nunca debe ejecutar migraciones sobre WordPress `u937232440_WPVF9`.
 
 ### CI Antiguos
 
