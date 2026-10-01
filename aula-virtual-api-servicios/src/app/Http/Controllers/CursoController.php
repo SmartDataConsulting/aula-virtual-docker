@@ -443,8 +443,18 @@ public function listarParaEvaluaciones()
             $rows = $this->service->listarAlumnosCurso((int) $cursoEdicionId, $solicitanteCorreo);
 
             $data = array_map(function ($r) {
-                $estadoSolicitud = strtoupper(trim((string) ($r->solicitud_contacto_estado ?? '')));
-                $contactoPublico = (int) ($r->contacto_publico ?? 0);
+                $value = static function ($row, array $keys, $default = null) {
+                    foreach ($keys as $key) {
+                        if (is_object($row) && property_exists($row, $key)) {
+                            return $row->{$key};
+                        }
+                    }
+
+                    return $default;
+                };
+
+                $estadoSolicitud = strtoupper(trim((string) $value($r, ['solicitud_contacto_estado'], '')));
+                $contactoPublico = (int) $value($r, ['contacto_publico'], 0);
                 $contactStatus = 'private';
                 $contactStatusLabel = 'Contacto privado';
 
@@ -457,16 +467,16 @@ public function listarParaEvaluaciones()
                 }
 
                 return [
-                    'id' => (int) $r->id,
-                    'nombres' => $r->NOMBRES,
-                    'apellidos' => $r->APELLIDOS,
-                    'alumno' => $r->alumno,
-                    'correo_personal' => $r->CORREO_PERSONAL,
-                    'correo_corporativo' => $r->correo_corporativo ?? $r->CORREO_CORPORATIVO ?? null,
-                    'telefono' => $r->TELEFONO,
-                    'dni' => $r->DNI,
-                    'estado_pago' => $r->estado_pago,
-                    'foto_url' => $r->foto_url ?? null,
+                    'id' => (int) $value($r, ['id'], 0),
+                    'nombres' => $value($r, ['NOMBRES', 'nombres'], ''),
+                    'apellidos' => $value($r, ['APELLIDOS', 'apellidos'], ''),
+                    'alumno' => $value($r, ['alumno'], 'Participante'),
+                    'correo_personal' => $value($r, ['CORREO_PERSONAL', 'correo_personal'], null),
+                    'correo_corporativo' => $value($r, ['correo_corporativo', 'CORREO_CORPORATIVO'], null),
+                    'telefono' => $value($r, ['TELEFONO', 'telefono'], null),
+                    'dni' => $value($r, ['DNI', 'dni'], null),
+                    'estado_pago' => $value($r, ['estado_pago', 'ESTADO_PAGO'], null),
+                    'foto_url' => $value($r, ['foto_url'], null),
                     'contact_status' => $contactStatus,
                     'contact_status_label' => $contactStatusLabel,
                 ];

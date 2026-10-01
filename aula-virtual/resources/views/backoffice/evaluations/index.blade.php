@@ -6,7 +6,7 @@
 @section('content')
 @php
   $isAdmin = session(\App\Support\AuthSessionKeys::USER_ROLE) === 'admin';
-  $totalCursos = $cursos->count();
+  $totalCursos = $totalCursos ?? $cursos->total();
 @endphp
 
 <div class="page-header">
@@ -23,7 +23,7 @@
 
 <div class="page-shell">
   <section class="qualification-search-toolbar" aria-label="Busqueda de cursos">
-    <form id="evaluationsSearchForm" role="search" data-no-global-loader>
+    <form id="evaluationsSearchForm" role="search" method="GET" action="{{ route('backoffice.evaluations.index') }}" data-no-global-loader>
       <label for="courseSearchEvaluaciones" class="sr-only">Buscar por curso o codigo</label>
       <div class="qualification-search-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -31,8 +31,10 @@
         </svg>
         <input
           id="courseSearchEvaluaciones"
+          name="search"
           type="search"
           placeholder="Buscar por curso o codigo"
+          value="{{ $search ?? '' }}"
           autocomplete="off"
         >
       </div>
@@ -129,6 +131,11 @@
       No encontramos cursos con ese criterio de busqueda.
     </div>
   @endif
+
+  <div class="smart-pagination-wrap">
+    {{ $cursos->withQueryString()->links() }}
+  </div>
+
 </div>
 @endsection
 

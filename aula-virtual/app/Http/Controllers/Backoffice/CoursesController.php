@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Domain\Cursos\Scheduling\SessionScheduleResolver;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
     
 class CoursesController extends Controller
 {
@@ -1038,6 +1039,7 @@ public function evaluaciones(Request $request)
 {
     $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
     $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+    $search = trim((string) $request->query('search', ''));
 
     Log::info('CoursesController@evaluaciones', [
         'correo' => $correo,
@@ -1069,11 +1071,37 @@ public function evaluaciones(Request $request)
     } else {
 
         $cursos = collect($result->data()['cursos'] ?? []);
+
+        if ($search !== '') {
+            $needle = Str::lower(Str::ascii($search));
+            $cursos = $cursos->filter(function (array $curso) use ($needle) {
+                $haystack = Str::lower(Str::ascii(implode(' ', [
+                    (string) ($curso['nombre'] ?? ''),
+                    (string) ($curso['edicion'] ?? ''),
+                    (string) ($curso['docente'] ?? ''),
+                    (string) ($curso['id'] ?? ''),
+                ])));
+                return str_contains($haystack, $needle);
+            })->values();
+        }
     }
 
+    $totalCursos = $cursos->count();
+    $perPage = 6;
+    $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
+    $cursos = new LengthAwarePaginator(
+        $cursos->forPage($currentPage, $perPage)->values(),
+        $totalCursos,
+        $perPage,
+        $currentPage,
+        ['path' => $request->url(), 'pageName' => 'page', 'query' => $request->except('page')]
+    );
+
     return view('backoffice.evaluations.index', [
-        'cursos' => $cursos,
-        'error'  => $error,
+        'cursos'      => $cursos,
+        'error'       => $error,
+        'search'      => $search,
+        'totalCursos' => $totalCursos,
     ]);
 }
 

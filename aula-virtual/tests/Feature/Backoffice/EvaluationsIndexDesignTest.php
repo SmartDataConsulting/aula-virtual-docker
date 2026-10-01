@@ -3,6 +3,7 @@
 namespace Tests\Feature\Backoffice;
 
 use App\Support\AuthSessionKeys;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Tests\TestCase;
 
 class EvaluationsIndexDesignTest extends TestCase
@@ -15,7 +16,7 @@ class EvaluationsIndexDesignTest extends TestCase
         ]);
 
         $html = view('backoffice.evaluations.index', [
-            'cursos' => collect([
+            'cursos' => $this->coursesPaginator([
                 [
                     'curso_id' => 32,
                     'edicion' => '7',
@@ -30,6 +31,8 @@ class EvaluationsIndexDesignTest extends TestCase
                 ],
             ]),
             'error' => null,
+            'search' => '',
+            'totalCursos' => 1,
         ])->render();
 
         $this->assertStringContainsString('grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3', $html);
@@ -37,5 +40,38 @@ class EvaluationsIndexDesignTest extends TestCase
         $this->assertStringContainsString('Edicion 7', $html);
         $this->assertStringContainsString('Gestionar evaluaciones', $html);
         $this->assertStringNotContainsString('evaluations-course-card', $html);
+    }
+
+    public function test_evaluations_renders_an_empty_paginated_result(): void
+    {
+        session([
+            AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::USER_EMAIL => 'admin@local',
+        ]);
+
+        $html = view('backoffice.evaluations.index', [
+            'cursos' => $this->coursesPaginator([]),
+            'error' => null,
+            'search' => '',
+            'totalCursos' => 0,
+        ])->render();
+
+        $this->assertStringContainsString('Mostrando 0 cursos disponibles', $html);
+        $this->assertStringContainsString('No hay cursos disponibles para gestionar evaluaciones.', $html);
+        $this->assertStringNotContainsString('backoffice-course-card evaluacion-course-card', $html);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $courses
+     */
+    private function coursesPaginator(array $courses): LengthAwarePaginator
+    {
+        return new LengthAwarePaginator(
+            $courses,
+            count($courses),
+            6,
+            1,
+            ['path' => route('backoffice.evaluations.index'), 'pageName' => 'page']
+        );
     }
 }

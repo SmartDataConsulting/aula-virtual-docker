@@ -55,7 +55,7 @@ class CertificatesController extends Controller
             $payload = $result->data();
             $courses = collect($payload['cursos'] ?? []);
 
-            if ($rol === 'admin' && mb_strlen($search) >= 4) {
+            if ($rol === 'admin' && mb_strlen($search) >= 2) {
                 $needle = mb_strtolower($search);
 
                 $courses = $courses->filter(function (array $course) use ($needle) {
