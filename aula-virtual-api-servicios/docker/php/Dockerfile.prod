@@ -27,6 +27,7 @@ COPY src ./
 
 COPY docker/php/uploads.prod.ini /usr/local/etc/php/conf.d/uploads.ini
 COPY docker/php/opcache.prod.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY docker/php/entrypoint.prod.sh /usr/local/bin/aula-entrypoint
 
 RUN mkdir -p \
     storage/logs \
@@ -36,8 +37,10 @@ RUN mkdir -p \
     bootstrap/cache \
     && composer dump-autoload --no-dev --optimize \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R ug+rwX storage bootstrap/cache
+    && chmod -R ug+rwX storage bootstrap/cache \
+    && chmod +x /usr/local/bin/aula-entrypoint
 
 EXPOSE 9000
 
+ENTRYPOINT ["aula-entrypoint"]
 CMD ["php-fpm"]

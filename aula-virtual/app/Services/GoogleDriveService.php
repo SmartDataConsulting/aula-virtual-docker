@@ -10,7 +10,6 @@ use RuntimeException;
 
 class GoogleDriveService
 {
-    private const DEFAULT_SERVICE_ACCOUNT_PATH = 'storage/google/service-account.json';
     private const TOKEN_URI = 'https://oauth2.googleapis.com/token';
     private const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
     private const DRIVE_FILES_URI =
@@ -25,10 +24,7 @@ class GoogleDriveService
     public function __construct(?Client $client = null)
     {
         $this->client = $client ?? new Client();
-        $this->serviceAccountPath = (string) config(
-            'services.google_drive.service_account_path',
-            self::DEFAULT_SERVICE_ACCOUNT_PATH
-        );
+        $this->serviceAccountPath = (string) config('services.google_drive.service_account_path');
         $this->lmsFolderId = $this->normalizeConfigValue(
             config('services.google_drive.lms_folder_id')
         );
@@ -568,25 +564,27 @@ class GoogleDriveService
 
     private function getAccessToken(): string
     {
-        return Cache::remember('google_drive_service.access_token', 3500, function () {
-            $path = base_path($this->serviceAccountPath);
+        $path = $this->resolveServiceAccountPath();
 
-            if (!is_file($path)) {
-                Log::error('google_drive_service.access_token.credentials_missing', [
-                    'path' => $path,
-                ]);
+        if (!is_file($path) || !is_readable($path)) {
+            Log::error('google_drive_service.access_token.credentials_unavailable');
 
-                throw new RuntimeException('No se encontro el archivo de credenciales de Google Drive');
+            throw new RuntimeException('No se encontro un archivo legible de credenciales de Google Drive');
+        }
+
+        return Cache::remember('google_drive_service.access_token', 3500, function () use ($path) {
+            try {
+                $creds = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                Log::error('google_drive_service.access_token.credentials_invalid_json');
+
+                throw new RuntimeException('El archivo de credenciales de Google Drive no contiene JSON valido');
             }
 
-            $creds = json_decode(file_get_contents($path), true);
-
             if (!is_array($creds) || empty($creds['client_email']) || empty($creds['private_key'])) {
-                Log::error('google_drive_service.access_token.invalid_credentials', [
-                    'path' => $path,
-                ]);
+                Log::error('google_drive_service.access_token.credentials_incomplete');
 
-                throw new RuntimeException('Las credenciales de Google Drive son invalidas');
+                throw new RuntimeException('El archivo de credenciales de Google Drive esta incompleto');
             }
 
             $now = time();
@@ -617,7 +615,7 @@ class GoogleDriveService
                 ]);
             } catch (\Throwable $e) {
                 Log::error('google_drive_service.access_token.connection_error', [
-                    'error' => $e->getMessage(),
+                    'exception_class' => get_class($e),
                 ]);
 
                 throw new RuntimeException('Error obteniendo access token de Google Drive');
@@ -628,7 +626,6 @@ class GoogleDriveService
                 || empty($body['access_token'])) {
                 Log::error('google_drive_service.access_token.http_error', [
                     'status' => $response->getStatusCode(),
-                    'response_body' => $body,
                 ]);
 
                 throw new RuntimeException('Google Drive no devolvio un access token valido');
@@ -636,6 +633,28 @@ class GoogleDriveService
 
             return $body['access_token'];
         });
+    }
+
+    private function resolveServiceAccountPath(): string
+    {
+        $path = trim($this->serviceAccountPath);
+
+        if ($path === '') {
+            throw new RuntimeException('GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH no esta configurada');
+        }
+
+        if ($this->isAbsolutePath($path)) {
+            return $path;
+        }
+
+        return base_path($path);
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        return str_starts_with($path, '/')
+            || str_starts_with($path, '\\')
+            || preg_match('/^[A-Za-z]:[\\\\\/]/', $path) === 1;
     }
 
     public function getRootFolderId(): string

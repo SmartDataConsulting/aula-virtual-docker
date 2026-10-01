@@ -1,5 +1,12 @@
 <?php
 
+$wordpressBypassAllowedEnvironments = ['local', 'testing'];
+$wordpressBypassRequested = filter_var(
+    env('WP_AUTH_BYPASS', false),
+    FILTER_VALIDATE_BOOLEAN
+);
+$applicationEnvironment = (string) env('APP_ENV', 'production');
+
 return [
 
     /*
@@ -113,6 +120,12 @@ return [
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
     'gateway' => [
+        'wordpress_bypass' => [
+            'requested' => $wordpressBypassRequested,
+            'effective' => $wordpressBypassRequested
+                && in_array($applicationEnvironment, $wordpressBypassAllowedEnvironments, true),
+            'allowed_environments' => $wordpressBypassAllowedEnvironments,
+        ],
         'lockout' => [
             'max_attempts' => env('AUTH_LOCKOUT_MAX_ATTEMPTS', 5),
             'window_seconds' => env('AUTH_LOCKOUT_WINDOW', 180),

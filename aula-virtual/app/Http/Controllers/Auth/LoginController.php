@@ -25,7 +25,7 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        $wpAuthBypass = filter_var(env('WP_AUTH_BYPASS', false), FILTER_VALIDATE_BOOLEAN);
+        $wpAuthBypass = (bool) config('auth.gateway.wordpress_bypass.effective', false);
 
         $request->validate([
             'username' => ['required', 'string'],

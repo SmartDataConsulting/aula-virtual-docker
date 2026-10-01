@@ -18,6 +18,7 @@ services:
       - ./aula-virtual:/var/www
       - portal-vendor:/var/www/vendor
       - portal-cache:/var/www/storage/framework/cache
+      - ${AULA_PORTAL_SECRETS_DIR:-./secrets/portal}:/run/secrets/aula-portal:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -34,6 +35,7 @@ services:
       INTERNAL_SERVICE_TOKEN: change-me
       API_SERVICIOS_TIMEOUT: 5
       API_SERVICIOS_RETRY_TIMES: 0
+      GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH: /run/secrets/aula-portal/google-service-account.json
     entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
     command: >
       php-fpm
@@ -62,6 +64,7 @@ services:
       - ./aula-virtual-api-servicios/src:/var/www
       - api-vendor:/var/www/vendor
       - api-cache:/var/www/storage/framework/cache
+      - ${AULA_API_SECRETS_DIR:-./secrets/api}:/run/secrets/aula-api:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -79,6 +82,7 @@ services:
       DB_SGA_USERNAME: root
       DB_SGA_PASSWORD: ""
       SGA_PUBLIC_BASE_URL: http://localhost/sga-web
+      GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH: /run/secrets/aula-api/google-service-account.json
     entrypoint: ["sh", "/usr/local/bin/aula-entrypoint"]
     command: >
       php-fpm

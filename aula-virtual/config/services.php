@@ -63,10 +63,7 @@ return [
     ],
 
     'google_drive' => [
-        'service_account_path' => env(
-            'GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH',
-            'storage/google/service-account.json'
-        ),
+        'service_account_path' => env('GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH'),
         'lms_folder_id' => env('GOOGLE_DRIVE_LMS_FOLDER_ID'),
     ],
 

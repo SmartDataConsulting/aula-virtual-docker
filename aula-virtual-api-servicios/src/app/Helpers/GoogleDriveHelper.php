@@ -9,7 +9,6 @@ use RuntimeException;
 
 class GoogleDriveHelper
 {
-    private const SERVICE_ACCOUNT_PATH = 'storage/google/service-account.json';
     private const TOKEN_URI = 'https://oauth2.googleapis.com/token';
 
     private const DRIVE_FILES_URI =
@@ -19,10 +18,12 @@ class GoogleDriveHelper
         'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&includeItemsFromAllDrives=true';
 
     private Client $client;
+    private string $serviceAccountPath;
 
     public function __construct()
     {
         $this->client = new Client();
+        $this->serviceAccountPath = (string) config('services.google_drive.service_account_path');
     }
 
     /*
@@ -237,18 +238,27 @@ class GoogleDriveHelper
 
     private function getAccessToken(): string
     {
-        return Cache::remember('google_drive_token', 3500, function () {
+        $path = $this->resolveServiceAccountPath();
 
-            $path = base_path(self::SERVICE_ACCOUNT_PATH);
+        if (!is_file($path) || !is_readable($path)) {
+            Log::error('google_drive_token_credentials_unavailable');
 
-            if (!file_exists($path)) {
-                throw new RuntimeException('No se encontró el archivo de credenciales de Google');
+            throw new RuntimeException('No se encontro un archivo legible de credenciales de Google Drive');
+        }
+
+        return Cache::remember('google_drive_token', 3500, function () use ($path) {
+            try {
+                $creds = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                Log::error('google_drive_token_credentials_invalid_json');
+
+                throw new RuntimeException('El archivo de credenciales de Google Drive no contiene JSON valido');
             }
 
-            $creds = json_decode(file_get_contents($path), true);
+            if (!is_array($creds) || empty($creds['client_email']) || empty($creds['private_key'])) {
+                Log::error('google_drive_token_credentials_incomplete');
 
-            if (!$creds || empty($creds['client_email']) || empty($creds['private_key'])) {
-                throw new RuntimeException('Credenciales de Google inválidas');
+                throw new RuntimeException('El archivo de credenciales de Google Drive esta incompleto');
             }
 
             $now = time();
@@ -279,7 +289,7 @@ class GoogleDriveHelper
             } catch (\Throwable $e) {
 
                 Log::error('drive_token_error', [
-                    'error' => $e->getMessage(),
+                    'exception_class' => get_class($e),
                 ]);
 
                 throw new RuntimeException('Error obteniendo token de Google');
@@ -287,10 +297,12 @@ class GoogleDriveHelper
 
             $body = json_decode($response->getBody()->getContents(), true);
 
-            if (empty($body['access_token'])) {
+            if ($response->getStatusCode() < 200
+                || $response->getStatusCode() >= 300
+                || empty($body['access_token'])) {
 
                 Log::error('drive_token_error', [
-                    'response' => $body,
+                    'status' => $response->getStatusCode(),
                 ]);
 
                 throw new RuntimeException('No se pudo obtener access token de Google');
@@ -298,6 +310,28 @@ class GoogleDriveHelper
 
             return $body['access_token'];
         });
+    }
+
+    private function resolveServiceAccountPath(): string
+    {
+        $path = trim($this->serviceAccountPath);
+
+        if ($path === '') {
+            throw new RuntimeException('GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH no esta configurada');
+        }
+
+        if ($this->isAbsolutePath($path)) {
+            return $path;
+        }
+
+        return base_path($path);
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        return str_starts_with($path, '/')
+            || str_starts_with($path, '\\')
+            || preg_match('/^[A-Za-z]:[\\\\\/]/', $path) === 1;
     }
 
     /*

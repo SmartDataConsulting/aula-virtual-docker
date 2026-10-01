@@ -49,7 +49,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M7 11V8a5 5 0 0110 0v3"></path>
           </svg>
         </span>
-        <input id="password" name="password" type="password" class="form-control" placeholder="••••••••" @unless(filter_var(env('WP_AUTH_BYPASS', false), FILTER_VALIDATE_BOOLEAN)) required @endunless>
+        <input id="password" name="password" type="password" class="form-control" placeholder="••••••••" @unless(config('auth.gateway.wordpress_bypass.effective', false)) required @endunless>
       </div>
     </div>
 

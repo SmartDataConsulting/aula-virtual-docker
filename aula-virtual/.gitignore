@@ -35,6 +35,16 @@ Thumbs.db
 
 # Docker / CI
 docker/
+!docker/
+docker/*
+!docker/php/
+docker/php/*
+!docker/php/opcache.prod.ini
+!docker/php/uploads.prod.ini
+!docker/php/entrypoint.prod.sh
+!docker/nginx/
+docker/nginx/*
+!docker/nginx/portal.prod.conf
 docker-compose.yml
 compose.yaml
 

@@ -9,6 +9,7 @@ storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
+storage/google/service-account.json
 bootstrap/cache/*
 public/build
 .phpunit.result.cache

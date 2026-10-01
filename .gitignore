@@ -5,6 +5,13 @@
 secrets/*
 !secrets/.gitkeep
 
+# Production database backups are stored outside Git.
+/backups/
+
+# Google Drive credentials must be supplied outside Git.
+aula-virtual/storage/google/service-account.json
+aula-virtual-api-servicios/src/storage/google/service-account.json
+
 **/vendor/
 **/node_modules/
 **/storage/logs/*.log

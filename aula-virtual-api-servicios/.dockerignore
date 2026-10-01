@@ -8,6 +8,7 @@ src/storage/logs/*
 src/storage/framework/cache/*
 src/storage/framework/sessions/*
 src/storage/framework/views/*
+src/storage/google/service-account.json
 src/bootstrap/cache/*
 src/.phpunit.result.cache
 src/tests

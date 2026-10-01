@@ -12,6 +12,7 @@ x-portal-env: &portal-env
   environment:
     APP_ENV: production
     APP_DEBUG: "false"
+    WP_AUTH_BYPASS: "false"
     LOG_LEVEL: warning
     CACHE_STORE: redis
     SESSION_DRIVER: redis
@@ -58,7 +59,7 @@ services:
     volumes:
       - portal-storage:/var/www/storage
       - portal-bootstrap-cache:/var/www/bootstrap/cache
-      - ./secrets:/run/secrets/aula:ro
+      - ${AULA_PORTAL_SECRETS_DIR:-./secrets/portal}:/run/secrets/aula-portal:ro
     networks:
       default:
         aliases:
@@ -102,6 +103,7 @@ services:
     volumes:
       - api-storage:/var/www/storage
       - api-bootstrap-cache:/var/www/bootstrap/cache
+      - ${AULA_API_SECRETS_DIR:-./secrets/api}:/run/secrets/aula-api:ro
     networks:
       default:
         aliases:
@@ -143,7 +145,6 @@ services:
     volumes:
       - portal-storage:/var/www/storage
       - portal-bootstrap-cache:/var/www/bootstrap/cache
-      - ./secrets:/run/secrets/aula:ro
     command: php artisan queue:work redis --sleep=1 --tries=1 --timeout=120
     logging: *default-logging
 
@@ -161,7 +162,6 @@ services:
     volumes:
       - portal-storage:/var/www/storage
       - portal-bootstrap-cache:/var/www/bootstrap/cache
-      - ./secrets:/run/secrets/aula:ro
     command: sh -lc "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
     logging: *default-logging
 

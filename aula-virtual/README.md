@@ -85,7 +85,7 @@ INTERNAL_SERVICE_TOKEN=change-me
 API_SERVICIOS_TIMEOUT=5
 API_SERVICIOS_RETRY_TIMES=0
 
-GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH=storage/google/service-account.json
+GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH=../secrets/portal/google-service-account.json
 GOOGLE_DRIVE_LMS_FOLDER_ID=
 ```
 
@@ -262,11 +262,13 @@ Recomendaciones:
 Se usa para grabaciones, materiales y archivos asociados. Configurar:
 
 ```env
-GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH=storage/google/service-account.json
+GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH=../secrets/portal/google-service-account.json
 GOOGLE_DRIVE_LMS_FOLDER_ID=
 ```
 
-El service account debe tener permiso sobre la carpeta de Drive.
+La ruta puede ser absoluta o relativa a la raiz de `aula-virtual`. El archivo debe mantenerse fuera de Git. En Docker se monta en modo solo lectura desde `secrets/portal`; la API usa su propio archivo desde `secrets/api`, por lo que ambas aplicaciones pueden tener cuentas distintas. Si falta la variable, el archivo no existe o el JSON es invalido, las operaciones de Drive fallan de forma controlada. El service account debe tener permiso sobre la carpeta de Drive.
+
+Para Docker local, crea `secrets/portal` y `secrets/api` en la raiz del monorepo y coloca manualmente el archivo correspondiente en cada directorio con el nombre `google-service-account.json`. Los directorios estan ignorados por Git. No se necesita una credencial real para compilar, levantar Redis/Nginx ni ejecutar las pruebas unitarias; solo las operaciones que contactan Drive requieren el archivo.
 
 ### Zoom
 
