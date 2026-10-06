@@ -116,7 +116,7 @@ class SesionService
         foreach($sesiones as $s){
             $s->evaluaciones = $map[$s->id] ?? [];
             $s->materiales = $this->materialService->listarPorSesion((int) $s->id);
-            $s->anuncios = $this->anuncioService->listar('sesion', (int) $s->id);
+            $s->anuncios = $this->anuncioService->listarAnuncios('sesion', (int) $s->id);
         }
 
         return $sesiones;
