@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use Closure;
+use App\Services\Support\ServiceResult;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PerformanceCache
@@ -13,6 +15,42 @@ class PerformanceCache
     public const CATALOG_TTL = 900;
     public const SHORT_TTL = 10;
     private const STALE_TTL = 3600;
+    public const NAMESPACE = 'portal-perf:v2:';
+
+    public static function rememberFreshOrStaleOnError(string $key, int $seconds, Closure $callback): ServiceResult
+    {
+        $fresh = Cache::get(self::prefix($key));
+        if ($fresh instanceof ServiceResult && $fresh->ok()) {
+            return $fresh;
+        }
+
+        try {
+            $result = $callback();
+            if (!$result instanceof ServiceResult) {
+                throw new \UnexpectedValueException('Expected a ServiceResult.');
+            }
+        } catch (Throwable) {
+            $result = ServiceResult::failure(['message' => 'No se pudieron actualizar los cursos.'], 503);
+        }
+
+        if ($result->ok()) {
+            Cache::put(self::prefix($key), $result, $seconds);
+            Cache::put(self::stalePrefix($key), $result, self::STALE_TTL);
+            return $result;
+        }
+
+        $stale = Cache::get(self::stalePrefix($key));
+        if ($stale instanceof ServiceResult && $stale->ok()) {
+            Log::warning('performance_cache_stale_on_error', [
+                'cache_key' => hash('sha256', self::prefix($key)),
+                'scope' => implode(':', array_slice(explode(':', $key), 0, 2)),
+                'status' => $result->status(),
+            ]);
+            return $stale;
+        }
+
+        return $result;
+    }
 
     public static function remember(string $key, int $seconds, Closure $callback): mixed
     {
@@ -105,7 +143,7 @@ class PerformanceCache
 
     private static function prefix(string $key): string
     {
-        return 'portal-perf:' . $key;
+        return self::NAMESPACE . $key;
     }
 
     private static function stalePrefix(string $key): string

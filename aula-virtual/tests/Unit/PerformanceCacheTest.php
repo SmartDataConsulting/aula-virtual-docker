@@ -16,7 +16,7 @@ class PerformanceCacheTest extends TestCase
         $success = ServiceResult::success(['courses' => [1, 2, 3]]);
 
         self::assertSame($success, PerformanceCache::remember($key, 60, fn () => $success));
-        Cache::forget('portal-perf:'.$key);
+        Cache::forget(PerformanceCache::NAMESPACE.$key);
 
         $result = PerformanceCache::remember(
             $key,

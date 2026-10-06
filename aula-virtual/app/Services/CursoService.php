@@ -22,7 +22,7 @@ class CursoService
         $role = (string) session(AuthSessionKeys::USER_ROLE, 'guest');
         $cacheKey = PerformanceCache::courseListKey('main', $role, $correo);
 
-        return PerformanceCache::remember($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () use ($correo, $role) {
+        return PerformanceCache::rememberFreshOrStaleOnError($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () use ($correo, $role) {
             return $this->listarCursosFresh($correo, $role);
         });
     }
@@ -30,13 +30,13 @@ class CursoService
     private function listarCursosFresh(string $correo, string $role): ServiceResult
     {
         $isStudent = in_array($role, ['alumno', 'student'], true);
-        $result = $isStudent
+        $result = $this->validateCourseListResult($isStudent
             ? $this->client->resumenAlumno($correo)
-            : $this->client->resumenBackoffice($correo, $role);
+            : $this->client->resumenBackoffice($correo, $role));
 
         if (!$result->ok()) {
             $includeSuggestions = $isStudent;
-            $result = $this->client->listarCursos($correo, $includeSuggestions);
+            $result = $this->validateCourseListResult($this->client->listarCursos($correo, $includeSuggestions));
         }
 
         if (!$result->ok()) {
@@ -264,6 +264,38 @@ class CursoService
         }
 
         return [];
+    }
+
+    private function validateCourseListResult(ServiceResult $result): ServiceResult
+    {
+        if (!$result->ok()) {
+            return $result;
+        }
+
+        $payload = $result->data();
+        if (is_array($payload)
+            && !isset($payload['error'])
+            && (!array_key_exists('ok', $payload) || $payload['ok'] === true)
+            && (!array_key_exists('success', $payload) || $payload['success'] === true)) {
+            $items = null;
+            if (array_is_list($payload)) {
+                $items = $payload;
+            } else {
+                foreach (['courses', 'cursos', 'data', 'items'] as $key) {
+                    if (isset($payload[$key]) && is_array($payload[$key]) && array_is_list($payload[$key])) {
+                        $items = $payload[$key];
+                        break;
+                    }
+                }
+            }
+
+            if ($items !== null && collect($items)->every(fn ($item) => is_array($item)
+                && (isset($item['id']) || isset($item['curso_edicion_id']) || isset($item['curso_id'])))) {
+                return $result;
+            }
+        }
+
+        return ServiceResult::failure(['message' => 'Respuesta de listado de cursos invalida.'], 502);
     }
 
     private function extractAlumnoItems(mixed $payload): array
@@ -600,7 +632,7 @@ public function listarCursosParaEvaluaciones(): ServiceResult
     $email = (string) session(AuthSessionKeys::USER_EMAIL, '');
     $cacheKey = PerformanceCache::courseListKey('evaluations', $role, $email);
 
-    return PerformanceCache::remember($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
+    return PerformanceCache::rememberFreshOrStaleOnError($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
         return $this->listarCursosParaEvaluacionesFresh();
     });
 }
@@ -649,7 +681,7 @@ public function listarCursosParaCalificaciones(): ServiceResult
     $email = (string) session(AuthSessionKeys::USER_EMAIL, '');
     $cacheKey = PerformanceCache::courseListKey('qualifications', $role, $email);
 
-    return PerformanceCache::remember($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
+    return PerformanceCache::rememberFreshOrStaleOnError($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
         return $this->listarCursosParaCalificacionesFresh();
     });
 }
@@ -707,7 +739,7 @@ public function listarCursosParaEncuestas(): ServiceResult
     $email = (string) session(AuthSessionKeys::USER_EMAIL, '');
     $cacheKey = PerformanceCache::courseListKey('surveys', $role, $email);
 
-    return PerformanceCache::remember($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
+    return PerformanceCache::rememberFreshOrStaleOnError($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
         $result = $this->client->listarCursosParaEncuestas();
 
         if (!$result->ok()) {
@@ -748,7 +780,7 @@ public function listarCursosParaCertificados(): ServiceResult
     $email = (string) session(AuthSessionKeys::USER_EMAIL, '');
     $cacheKey = PerformanceCache::courseListKey('certificates', $role, $email);
 
-    return PerformanceCache::remember($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
+    return PerformanceCache::rememberFreshOrStaleOnError($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () {
         return $this->listarCursosParaCertificadosFresh();
     });
 }
