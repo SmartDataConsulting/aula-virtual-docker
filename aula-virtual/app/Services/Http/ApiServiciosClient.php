@@ -39,9 +39,10 @@
         /**
          * Devuelve los headers comunes para todas las peticiones.
          */
-        private function headers(): array
+        private function headers(array $headerOverrides = []): array
         {
             $headers = [
+                'Accept' => 'application/json',
                 'X-INTERNAL-SERVICE-TOKEN' => $this->token,
                 config('services.correlation.header', 'X-Correlation-ID') => $this->correlationId(),
             ];
@@ -58,6 +59,16 @@
                         $headers[$header] = $value;
                     }
                 }
+            }
+
+            // HTTP header names are case-insensitive. Explicit empty values must win too.
+            foreach ($headerOverrides as $name => $value) {
+                foreach (array_keys($headers) as $existingName) {
+                    if (strcasecmp($existingName, $name) === 0) {
+                        unset($headers[$existingName]);
+                    }
+                }
+                $headers[$name] = $value;
             }
 
             return $headers;
@@ -80,12 +91,11 @@
 
         
 
-        private function client()
+        private function client(array $headerOverrides = [])
     {
         return Http::timeout($this->timeout)
             ->retry($this->retryTimes, $this->retrySleep)
-            ->acceptJson()
-            ->withHeaders($this->headers())
+            ->withHeaders($this->headers($headerOverrides))
 
             ->withMiddleware(function ($handler) {
                 return function ($request, $options) use ($handler) {
@@ -267,8 +277,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -291,8 +300,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -312,8 +320,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => $role,
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -338,8 +345,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                         'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                     ])
@@ -375,8 +381,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                         'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                     ])
@@ -405,8 +410,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -434,8 +438,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -466,12 +469,11 @@
             return $this->execute(
                 $endpoint,
                 function () use ($endpoint, $correo, $archivos) {
-                    $request = $this->client()
-                        ->asMultipart()
-                        ->withHeaders([
+                    $request = $this->client([
                             'X-USER-ROL' => 'alumno',
                             'X-USER-EMAIL' => $correo,
-                        ]);
+                        ])
+                        ->asMultipart();
 
                     foreach (['foto', 'cv'] as $tipo) {
                         $file = $archivos[$tipo] ?? null;
@@ -515,8 +517,7 @@
 
             return $this->executeRaw(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $correo,
                         'Accept' => '*/*',
@@ -547,8 +548,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $data['solicitante_correo'] ?? session(AuthSessionKeys::USER_EMAIL),
                     ])
@@ -580,8 +580,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -616,8 +615,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $destinatarioCorreo,
                     ])
@@ -650,8 +648,7 @@
 
             return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -680,8 +677,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -711,8 +707,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => 'alumno',
                         'X-USER-EMAIL' => $correo,
                     ])
@@ -947,8 +942,7 @@
             $endpoint,
             function () use ($sessionId, $payload, $rol, $endpoint) {
 
-                $request = $this->client()
-                    ->withHeaders([
+                $request = $this->client([
                         'X-USER-ROL' => $rol,
                     ]);
 
@@ -994,8 +988,7 @@
             return $this->execute(
                 $endpoint,
                 function () use ($sessionId, $materialId, $payload, $rol, $endpoint) {
-                    $request = $this->client()
-                        ->withHeaders([
+                    $request = $this->client([
                             'X-USER-ROL' => $rol,
                         ]);
                     $url = $this->buildUrl($endpoint);
@@ -1041,8 +1034,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                 ])
                 ->delete($this->buildUrl($endpoint)),
@@ -1074,8 +1066,7 @@
 
         return $this->executeRaw(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'Accept'     => '*/*',
                 ])
@@ -1111,8 +1102,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                 ])
                 ->get($this->buildUrl($endpoint)),
@@ -1195,8 +1185,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                 ])
                 ->post($this->buildUrl($endpoint), $payload),
@@ -1229,8 +1218,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                 ])
                 ->put($this->buildUrl($endpoint), $payload),
@@ -1261,8 +1249,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                 ])
                 ->delete($this->buildUrl($endpoint)),
@@ -1293,8 +1280,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -1324,8 +1310,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -1358,8 +1343,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                     'X-USER-NAME' => session(AuthSessionKeys::USER_NAME),
@@ -1389,8 +1373,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -1651,8 +1634,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => (string) session(AuthSessionKeys::USER_ROLE),
                         'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                     ])
@@ -1734,8 +1716,7 @@
 
             return $this->execute(
                 $endpoint,
-                fn() => $this->client()
-                    ->withHeaders([
+                fn() => $this->client([
                         'X-USER-ROL' => (string) session(AuthSessionKeys::USER_ROLE),
                         'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                     ])
@@ -1755,7 +1736,7 @@
             $endpoint = "/v1/alumno/cursos/{$courseId}/sesiones/{$sessionId}/encuestas/{$linkId}";
             return $this->execute(
                 $endpoint,
-                fn () => $this->client()->withHeaders([
+                fn () => $this->client([
                     'X-USER-ROL' => 'alumno',
                     'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                 ])->get($this->buildUrl($endpoint)),
@@ -1772,7 +1753,7 @@
             $endpoint = "/v1/alumno/cursos/{$courseId}/sesiones/{$sessionId}/encuestas/{$linkId}/respuestas";
             return $this->execute(
                 $endpoint,
-                fn () => $this->client()->withHeaders([
+                fn () => $this->client([
                     'X-USER-ROL' => 'alumno',
                     'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                 ])->post($this->buildUrl($endpoint), $payload),
@@ -1820,8 +1801,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => (string) session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -1861,8 +1841,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => (string) session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -1904,8 +1883,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => (string) session(AuthSessionKeys::USER_ROLE),
                     'X-USER-EMAIL' => (string) session(AuthSessionKeys::USER_EMAIL),
                 ])
@@ -1964,8 +1942,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -1997,8 +1974,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2023,8 +1999,7 @@
 
         return $this->execute(
             $endpoint,
-            fn () => $this->client()
-                ->withHeaders([
+            fn () => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2053,8 +2028,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2080,8 +2054,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2115,12 +2088,11 @@
         return $this->execute(
             $endpoint,
             function () use ($endpoint, $data, $archivo, $rol, $correo) {
-                $request = $this->client()
-                    ->asMultipart()
-                    ->withHeaders([
+                $request = $this->client([
                         'X-USER-ROL' => $rol,
                         'X-USER-EMAIL' => $correo,
-                    ]);
+                    ])
+                    ->asMultipart();
 
                 if ($archivo instanceof \Illuminate\Http\UploadedFile) {
                     $request = $request->attach(
@@ -2162,8 +2134,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2193,8 +2164,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2225,8 +2195,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2261,8 +2230,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2296,8 +2264,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2331,8 +2298,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2369,8 +2335,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2409,8 +2374,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2448,8 +2412,7 @@
         return $this->execute(
             $endpoint,
             function () use ($endpoint, $payload, $rol, $correo) {
-                $request = $this->client()
-                    ->withHeaders([
+                $request = $this->client([
                         'X-USER-ROL' => $rol,
                         'X-USER-EMAIL' => $correo,
                     ]);
@@ -2493,8 +2456,7 @@
         return $this->execute(
             $endpoint,
             function () use ($endpoint, $payload, $rol, $correo) {
-                $request = $this->client()
-                    ->withHeaders([
+                $request = $this->client([
                         'X-USER-ROL' => $rol,
                         'X-USER-EMAIL' => $correo,
                     ]);
@@ -2540,8 +2502,7 @@
         return $this->execute(
             $endpoint,
             function () use ($endpoint, $payload, $rol, $correo) {
-                $request = $this->client()
-                    ->withHeaders([
+                $request = $this->client([
                         'X-USER-ROL' => $rol,
                         'X-USER-EMAIL' => $correo,
                     ]);
@@ -2587,8 +2548,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2623,8 +2583,7 @@
 
         return $this->executeRaw(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2664,8 +2623,7 @@
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2732,8 +2690,7 @@ public function autosaveEvaluacion(
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2775,8 +2732,7 @@ public function autosaveEvaluacion(
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -2815,8 +2771,7 @@ public function obtenerEvaluacion(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => $rol,
                 'X-USER-EMAIL' => $correo,
             ])
@@ -2850,8 +2805,7 @@ public function obtenerTrabajoEvaluacion(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => $rol,
                 'X-USER-EMAIL' => $correo,
             ])
@@ -2883,8 +2837,7 @@ public function obtenerTrabajoAlumno(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -2920,12 +2873,11 @@ public function guardarEntregaTrabajoAlumno(
     return $this->execute(
         $endpoint,
         function () use ($endpoint, $payload, $correo) {
-            $request = $this->client()
-                ->asMultipart()
-                ->withHeaders([
+            $request = $this->client([
                     'X-USER-ROL' => 'alumno',
                     'X-USER-EMAIL' => $correo,
-                ]);
+                ])
+                ->asMultipart();
 
             $files = $payload['archivos'] ?? [];
             unset($payload['archivos']);
@@ -2964,8 +2916,7 @@ public function finalizarEntregaTrabajoAlumno(
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -2995,8 +2946,7 @@ public function descargarArchivoEntregaTrabajoAlumno(int $archivoId): ServiceRes
 
     return $this->executeRaw(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
                 'Accept' => '*/*',
@@ -3033,8 +2983,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => $rol,
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3068,8 +3017,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -3107,8 +3055,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => $rol,
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3147,8 +3094,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -3174,8 +3120,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -3230,8 +3175,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -3308,8 +3252,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -3366,8 +3309,7 @@ public function publicarEvaluacion(int $evaluacionId): ServiceResult
 
         return $this->execute(
             $endpoint,
-            fn() => $this->client()
-                ->withHeaders([
+            fn() => $this->client([
                     'X-USER-ROL' => $rol,
                     'X-USER-EMAIL' => $correo,
                 ])
@@ -3404,8 +3346,7 @@ public function obtenerOIniciarRendicionAlumno(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3446,8 +3387,7 @@ public function guardarRespuestaRendicionAlumno(
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3482,8 +3422,7 @@ public function obtenerResultadoParcialRendicionAlumno(int $evaluacionId): Servi
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3513,8 +3452,7 @@ public function finalizarRendicionAlumno(int $evaluacionId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3544,8 +3482,7 @@ public function obtenerResultadoFinalRendicionAlumno(int $rendicionId): ServiceR
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3576,8 +3513,7 @@ public function listarNotasAlumnoPorCurso(int $cursoId): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => 'alumno',
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3610,8 +3546,7 @@ public function descargarArchivoEntregaTrabajoBackoffice(int $archivoId): Servic
 
     return $this->executeRaw(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => $rol,
                 'X-USER-EMAIL' => $correo,
                 'Accept' => '*/*',
@@ -3649,8 +3584,7 @@ public function listarPagosPorCorreo(string $correo): ServiceResult
 
     return $this->execute(
         $endpoint,
-        fn() => $this->client()
-            ->withHeaders([
+        fn() => $this->client([
                 'X-USER-ROL' => $rol,
                 'X-USER-EMAIL' => $correo,
             ])
@@ -3673,7 +3607,7 @@ public function registrarIntentoZoom(int $courseId, int $sessionId): ServiceResu
     $endpoint = "/v1/cursos/{$courseId}/sesiones/{$sessionId}/zoom/join";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->post($this->buildUrl($endpoint)),
@@ -3688,7 +3622,7 @@ public function listarAsistenciaCurso(int $courseId): ServiceResult
     $endpoint = "/v1/cursos/{$courseId}/asistencias";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->get($this->buildUrl($endpoint)),
@@ -3703,7 +3637,7 @@ public function listarResumenesAsistenciaCursos(): ServiceResult
     $endpoint = '/v1/asistencias/cursos/resumen';
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->get($this->buildUrl($endpoint)),
@@ -3718,7 +3652,7 @@ public function listarResumenSesionesAsistencia(int $courseId): ServiceResult
     $endpoint = "/v1/cursos/{$courseId}/asistencias/resumen";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->get($this->buildUrl($endpoint)),
@@ -3733,7 +3667,7 @@ public function listarAsistenciaSesion(int $courseId, int $sessionId): ServiceRe
     $endpoint = "/v1/cursos/{$courseId}/sesiones/{$sessionId}/asistencias";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->get($this->buildUrl($endpoint)),
@@ -3748,7 +3682,7 @@ public function listarMiAsistencia(int $courseId): ServiceResult
     $endpoint = "/v1/alumno/cursos/{$courseId}/asistencia";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => 'alumno',
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->get($this->buildUrl($endpoint)),
@@ -3763,7 +3697,7 @@ public function corregirAsistencia(int $sessionId, int $attendanceId, string $st
     $endpoint = "/v1/sesiones/{$sessionId}/asistencias/{$attendanceId}";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->patch($this->buildUrl($endpoint), ['status' => $status, 'reason' => $reason]),
@@ -3778,7 +3712,7 @@ public function sincronizarAsistencia(int $sessionId): ServiceResult
     $endpoint = "/v1/sesiones/{$sessionId}/asistencias/sync";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->post($this->buildUrl($endpoint)),
@@ -3793,7 +3727,7 @@ public function identificarParticipanteAsistencia(int $sessionId, int $eventId, 
     $endpoint = "/v1/sesiones/{$sessionId}/asistencias/identify";
     return $this->execute(
         $endpoint,
-        fn() => $this->client()->withHeaders([
+        fn() => $this->client([
             'X-USER-ROL' => session(AuthSessionKeys::USER_ROLE),
             'X-USER-EMAIL' => session(AuthSessionKeys::USER_EMAIL),
         ])->post($this->buildUrl($endpoint), [
