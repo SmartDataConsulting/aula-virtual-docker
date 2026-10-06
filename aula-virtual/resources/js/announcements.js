@@ -107,13 +107,15 @@ function openEditAnnouncementModal(id) {
     const titleInput = document.getElementById('edit_annuncio_title');
     const contentInput = document.getElementById('edit_annuncio_content');
     const typeSelect = document.getElementById('edit_annuncio_type');
+    const urlInput = document.getElementById('edit_annuncio_url');
     const form = document.getElementById('editAnnouncementForm');
 
-    if (!titleInput || !contentInput || !typeSelect || !form) return;
+    if (!titleInput || !contentInput || !typeSelect || !urlInput || !form) return;
 
     titleInput.value = el.dataset.titulo || '';
     contentInput.value = el.dataset.contenido || '';
     typeSelect.value = el.dataset.tipo || 'general';
+    urlInput.value = el.dataset.url || '';
     form.action = el.dataset.updateUrl;
 
     openModal('editAnnouncementModal');

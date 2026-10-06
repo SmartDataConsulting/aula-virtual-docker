@@ -41,10 +41,26 @@
          */
         private function headers(): array
         {
-            return [
+            $headers = [
                 'X-INTERNAL-SERVICE-TOKEN' => $this->token,
                 config('services.correlation.header', 'X-Correlation-ID') => $this->correlationId(),
             ];
+
+            $request = app()->bound('request') ? app('request') : null;
+            if ($request instanceof HttpRequest && $request->hasSession()) {
+                foreach ([
+                    'X-USER-ROL' => AuthSessionKeys::USER_ROLE,
+                    'X-USER-EMAIL' => AuthSessionKeys::USER_EMAIL,
+                    'X-USER-NAME' => AuthSessionKeys::USER_NAME,
+                ] as $header => $sessionKey) {
+                    $value = trim((string) $request->session()->get($sessionKey, ''));
+                    if ($value !== '') {
+                        $headers[$header] = $value;
+                    }
+                }
+            }
+
+            return $headers;
         }
 
 

@@ -115,6 +115,8 @@ class SesionService
         // inyectar
         foreach($sesiones as $s){
             $s->evaluaciones = $map[$s->id] ?? [];
+            $s->materiales = $this->materialService->listarPorSesion((int) $s->id);
+            $s->anuncios = $this->anuncioService->listar('sesion', (int) $s->id);
         }
 
         return $sesiones;

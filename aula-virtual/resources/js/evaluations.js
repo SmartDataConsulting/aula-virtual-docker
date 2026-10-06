@@ -8,6 +8,7 @@
         sessionId: 0,
         evaluacionesAsignadas: [],
         evaluacionesDisponibles: [],
+        canWrite: true,
     };
     let evaluationSyncStatusTimeoutId = null;
 
@@ -66,6 +67,7 @@
             sessionContainer.dataset.courseId || sessionEvaluationContext.courseId || 0
         );
         sessionEvaluationContext.sessionId = Number(sessionContainer.dataset.sessionId || 0);
+        sessionEvaluationContext.canWrite = sessionContainer.dataset.canWrite !== '0';
         sessionEvaluationContext.evaluacionesAsignadas = decodeEvaluationPayload(
             sessionContainer.dataset.evaluacionesAsignadas
         );
@@ -276,6 +278,15 @@
 
     function renderEvaluationCard(ev, options = {}) {
         const assigned = Boolean(options.assigned);
+        if (!sessionEvaluationContext.canWrite) {
+            return `
+                <div class="rounded-2xl border border-blue-200 bg-blue-50/70 px-5 py-5 shadow-sm">
+                    <div class="text-xl font-semibold leading-tight text-slate-800">${escapeHtml(ev.nombre || 'Evaluación')}</div>
+                    <div class="mt-2 text-sm text-slate-600"><span class="font-semibold">Tipo:</span> ${escapeHtml(ev.tipo || 'Sin tipo')}</div>
+                    ${ev.fecha_limite ? `<div class="mt-2 text-sm text-slate-600"><span class="font-semibold">Fecha límite:</span> ${escapeHtml(ev.fecha_limite)}</div>` : ''}
+                </div>
+            `;
+        }
         const checked = Boolean(options.checked);
         const isWork = isWorkType(ev);
         const deadlineValue = options.deadlineValue || '';

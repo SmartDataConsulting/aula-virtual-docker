@@ -139,15 +139,16 @@
             ->name('backoffice.')
             ->group(function () {
 
-            Route::get('attendance', [BackofficeAttendanceController::class, 'index'])->name('attendance.index');
-            Route::get('attendance/export', [BackofficeAttendanceController::class, 'export'])->name('attendance.export');
-            Route::get('attendance/{course}/export', [BackofficeAttendanceController::class, 'export'])->name('attendance.course.export');
-            Route::get('attendance/{course}', [BackofficeAttendanceController::class, 'show'])->name('attendance.show');
-            Route::patch('attendance/sessions/{session}/records/{attendance}', [BackofficeAttendanceController::class, 'update'])->name('attendance.update');
-            Route::post('attendance/sessions/{session}/sync', [BackofficeAttendanceController::class, 'sync'])->name('attendance.sync');
-            Route::post('attendance/sessions/{session}/identify', [BackofficeAttendanceController::class, 'identify'])->name('attendance.identify');
+            Route::get('attendance', [BackofficeAttendanceController::class, 'index'])->middleware('permission:attendance.read')->name('attendance.index');
+            Route::get('attendance/export', [BackofficeAttendanceController::class, 'export'])->middleware('permission:attendance.read')->name('attendance.export');
+            Route::get('attendance/{course}/export', [BackofficeAttendanceController::class, 'export'])->middleware('permission:attendance.read')->name('attendance.course.export');
+            Route::get('attendance/{course}', [BackofficeAttendanceController::class, 'show'])->middleware('permission:attendance.read')->name('attendance.show');
+            Route::patch('attendance/sessions/{session}/records/{attendance}', [BackofficeAttendanceController::class, 'update'])->middleware('permission:attendance.write')->name('attendance.update');
+            Route::post('attendance/sessions/{session}/sync', [BackofficeAttendanceController::class, 'sync'])->middleware('permission:attendance.write')->name('attendance.sync');
+            Route::post('attendance/sessions/{session}/identify', [BackofficeAttendanceController::class, 'identify'])->middleware('permission:attendance.write')->name('attendance.identify');
 
             Route::get('courses', [CoursesController::class, 'index'])
+                ->middleware('permission:video.read')
                 ->name('courses');
 
              /* ===============================
@@ -236,7 +237,7 @@
               Route::get(
                   'evaluations',
                 [CoursesController::class, 'evaluaciones']
-            )->name('evaluations.index');
+            )->middleware('permission:evaluations.read')->name('evaluations.index');
 
             Route::get(
                 'surveys',
@@ -256,194 +257,194 @@
             Route::get(
                 'evaluations/{courseId}',
                 [EvaluationsController::class, 'index']
-            )->name('evaluations.show');
+            )->middleware('permission:evaluations.read')->name('evaluations.show');
 
             Route::post(
                 'evaluations/{courseId}',
                 [EvaluationsController::class, 'store']
-            )->name('evaluations.store');
+            )->middleware('permission:evaluations.write')->name('evaluations.store');
 
             Route::get(
                 'evaluations/{courseId}/{evaluationId}/edit',
                 [EvaluationsController::class, 'edit']
-            )->name('evaluations.edit');
+            )->middleware('permission:evaluations.write')->name('evaluations.edit');
 
             Route::get(
                 'evaluations/{courseId}/{evaluationId}/work/edit',
                 [EvaluationsController::class, 'workEdit']
-            )->name('evaluations.work.edit');
+            )->middleware('permission:evaluations.write')->name('evaluations.work.edit');
 
             Route::get(
                 'evaluations/{courseId}/{evaluationId}/view',
                 [EvaluationsController::class, 'view']
-            )->name('evaluations.view');
+            )->middleware('permission:evaluations.read')->name('evaluations.view');
 
             Route::get(
                 'evaluations/{courseId}/{evaluationId}/work/view',
                 [EvaluationsController::class, 'workView']
-            )->name('evaluations.work.view');
+            )->middleware('permission:evaluations.read')->name('evaluations.work.view');
 
             Route::post(
                 'evaluations/{courseId}/{evaluationId}/autosave',
                 [EvaluationsController::class, 'autosave']
-            )->name('evaluations.autosave');
+            )->middleware('permission:evaluations.write')->name('evaluations.autosave');
 
             Route::post(
                 'evaluations/{courseId}/{evaluationId}/work',
                 [EvaluationsController::class, 'saveWork']
-            )->name('evaluations.work.save');
+            )->middleware('permission:evaluations.write')->name('evaluations.work.save');
 
            Route::post(
                 'evaluations/{courseId}/{evaluationId}/duplicate',
                 [EvaluationsController::class, 'duplicate']
-            )->name('evaluations.duplicate');
+            )->middleware('permission:evaluations.write')->name('evaluations.duplicate');
 
             Route::post(
                 'evaluations/{courseId}/{evaluationId}/publish',
                 [EvaluationsController::class, 'publish']
-            )->name('evaluations.publish');
+            )->middleware('permission:evaluations.write')->name('evaluations.publish');
 
             Route::get(
                 'evaluations/{courseId}/by-type/{typeId}',
                 [EvaluationsController::class, 'byType']
-            );
+            )->middleware('permission:evaluations.read');
 
             Route::get(
                 'courses/{courseId}/sessions/{sessionId}/evaluations',
                 [SessionsController::class, 'evaluations']
-            )->name('sessions.evaluations.list');
+            )->middleware('permission:evaluations.read')->name('sessions.evaluations.list');
 
             Route::post(
                 'sessions/{sessionId}/evaluation',
                 [SessionsController::class, 'assignEvaluation']
-            )->name('sessions.evaluation.assign');
+            )->middleware('permission:evaluations.write')->name('sessions.evaluation.assign');
 
             Route::post(
                 'courses/{courseId}/evaluation-plan/template',
                 [SessionsController::class, 'applyEvaluationPlanTemplate']
-            )->name('courses.evaluation-plan.template');
+            )->middleware('permission:evaluations.write')->name('courses.evaluation-plan.template');
 
             Route::delete(
                 'sessions/{sessionId}/evaluation/{evaluationId}',
                 [SessionsController::class, 'removeEvaluation']
-            )->name('sessions.evaluation.remove');
+            )->middleware('permission:evaluations.write')->name('sessions.evaluation.remove');
 
             Route::put(
                 'sessions/{sessionId}/evaluation/{evaluationId}',
                 [SessionsController::class, 'updateEvaluation']
-            )->name('sessions.evaluation.update');
+            )->middleware('permission:evaluations.write')->name('sessions.evaluation.update');
 
 
 
             Route::get(
                 'courses/{course}/announcements/{session?}',
                 [CoursesController::class, 'courseAnnouncements']
-            )->name('courses.announcements.index');
+            )->middleware('permission:announcements.read')->name('courses.announcements.index');
 
             Route::post(
                 'courses/{course}/announcements',
                 [CoursesController::class, 'storeAnnouncement']
-            )->name('courses.announcements.store');
+            )->middleware('permission:announcements.write')->name('courses.announcements.store');
 
             Route::put(
                 'courses/{course}/announcements/{announcement}',
                 [CoursesController::class, 'updateAnnouncement']
-            )->name('courses.announcements.update');
+            )->middleware('permission:announcements.write')->name('courses.announcements.update');
 
             Route::delete(
                 'courses/{course}/announcements/{announcement}',
                 [CoursesController::class, 'destroyAnnouncement']
-            )->name('courses.announcements.destroy');
+            )->middleware('permission:announcements.write')->name('courses.announcements.destroy');
 
             Route::get(
                 'courses/{course}/sessions/{session}/workspace',
                 [CoursesController::class, 'workspace']
-            )->name('courses.sessions.workspace');
+            )->middleware('permission:video.read')->name('courses.sessions.workspace');
 
             Route::get(
                 'courses/{course}/sessions/{session}/panels/{panel}',
                 [CoursesController::class, 'panel']
-            )->name('courses.sessions.panels.show');
+            )->middleware('permission:video.read')->name('courses.sessions.panels.show');
 
             Route::get(
                 'courses/{course}/community',
                 [CoursesController::class, 'community']
-            )->name('courses.community.show');
+            )->middleware('permission:video.read')->name('courses.community.show');
 
             Route::get(
                 'courses/{course}/{session?}',
                 [CoursesController::class, 'show']
-            )->name('courses.show');
+            )->middleware('permission:video.read')->name('courses.show');
 
             Route::post(
                 'courses/{course}/sessions/{session}/materials',
                 [CoursesController::class, 'storeMaterial']
-            )->name('courses.materials.store');
+            )->middleware('permission:materials.write')->name('courses.materials.store');
 
             Route::put(
                 'courses/{course}/sessions/{session}/materials/{material}',
                 [CoursesController::class, 'updateMaterial']
-            )->name('courses.materials.update');
+            )->middleware('permission:materials.write')->name('courses.materials.update');
 
             Route::delete(
                 'courses/{course}/sessions/{session}/materials/{material}',
                 [CoursesController::class, 'destroyMaterial']
-            )->name('courses.materials.destroy');
+            )->middleware('permission:materials.write')->name('courses.materials.destroy');
 
             Route::get(
                 'materials/{material}/preview',
                 [CoursesController::class, 'previewMaterial']
-            )->name('courses.materials.preview');
+            )->middleware('permission:materials.read')->name('courses.materials.preview');
 
             Route::get(
                 'materials/{material}/download',
                 [CoursesController::class, 'downloadMaterial']
-            )->name('courses.materials.download');
+            )->middleware('permission:materials.read')->name('courses.materials.download');
 
             Route::get(
                 'courses/{courseId}/sessions/{sessionId}/video/status',
                 [SesionVideoController::class, 'status']
-            )->name('backoffice.sessions.video.status');
+            )->middleware('permission:video.read')->name('backoffice.sessions.video.status');
 
             Route::post(
                 'courses/{course}/sessions/{session}/video/start-upload',
                 [SesionVideoController::class, 'startUpload']
-            );
+            )->middleware('permission:video.write');
 
             Route::post(
                 'courses/{course}/sessions/{session}/video/upload-chunk',
                 [SesionVideoController::class, 'uploadChunk']
-            );
+            )->middleware('permission:video.write');
 
             Route::post(
                 'courses/{course}/sessions/{session}/video/finalize-upload',
                 [SesionVideoController::class, 'finalizeUpload']
-            );
+            )->middleware('permission:video.write');
 
             Route::post(
                 'courses/{course}/sessions/{session}/video/cancel-upload',
                 [SesionVideoController::class, 'cancelUpload']
-            );
+            )->middleware('permission:video.write');
 
             Route::delete(
                 'courses/{course}/sessions/{session}/video',
                 [SesionVideoController::class, 'deleteVideo']
-            );
+            )->middleware('permission:video.write');
 
             Route::post(
                 'courses/{course}/sessions/{session}/video/chat',
                 [SesionVideoController::class, 'uploadChat']
-            );
+            )->middleware('permission:video.write');
 
             Route::delete(
                 'courses/{course}/sessions/{session}/video/chat',
                 [SesionVideoController::class, 'deleteChat']
-            );
+            )->middleware('permission:video.write');
 
             Route::get(
                 'sessions/{sessionId}/video/upload-progress',
                 [SesionVideoController::class, 'uploadProgress']
-            );
+            )->middleware('permission:video.read');
         
             
         });

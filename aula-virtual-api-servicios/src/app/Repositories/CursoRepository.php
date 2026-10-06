@@ -9,6 +9,42 @@ use Illuminate\Support\Facades\Log;
 class CursoRepository
 {
 
+public function usuarioPuedeAccederBackoffice(int $cursoId, string $correo, string $rol): bool
+{
+    $rol = strtolower(trim($rol));
+
+    if (in_array($rol, ['admin', 'administrador', 'operador'], true)) {
+        return true;
+    }
+
+    if (!in_array($rol, ['docente', 'profesor'], true) || trim($correo) === '') {
+        return false;
+    }
+
+    $sql = "
+        SELECT 1
+        FROM curso_edicion ce
+        WHERE ce.id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM usuario docente_usuario
+            WHERE LOWER(TRIM(docente_usuario.email)) = LOWER(TRIM(?))
+              AND (
+                docente_usuario.colaborador_id = ce.docente_id_colaborador
+                OR docente_usuario.colaborador_id = ce.docente2_id_colaborador
+                OR EXISTS (
+                    SELECT 1 FROM curso_edicion_sesiones sesion_docente
+                    WHERE sesion_docente.curso_edicion_id = ce.id
+                      AND sesion_docente.docente_id = docente_usuario.colaborador_id
+                )
+              )
+          )
+        LIMIT 1
+    ";
+
+    return DbSafe::select('mysql_cursos', $sql, [$cursoId, $correo]) !== [];
+}
+
 public function obtener(int $id)
 {
     $sql = "
@@ -327,12 +363,6 @@ public function listarCursosBackoffice(string $correo, string $rol)
 
         FROM curso_edicion ce
 
-        LEFT JOIN colaborador c 
-        ON ce.docente_id_colaborador = c.id_colaborador
-
-        LEFT JOIN usuario u
-        ON u.colaborador_id = c.id_colaborador
-
         LEFT JOIN (
             SELECT
                 curso COLLATE utf8mb4_unicode_ci AS curso,
@@ -367,7 +397,25 @@ public function listarCursosBackoffice(string $correo, string $rol)
                 ces.estado_sesion
         ) s ON s.curso_edicion_id = ce.id
 
-        WHERE (? = 'admin' OR ? = '' OR u.email = ?)
+        WHERE (
+            ? IN ('admin', 'administrador')
+            OR ? = ''
+            OR EXISTS (
+                SELECT 1
+                FROM usuario docente_usuario
+                WHERE LOWER(TRIM(docente_usuario.email)) = LOWER(TRIM(?))
+                  AND (
+                    docente_usuario.colaborador_id = ce.docente_id_colaborador
+                    OR docente_usuario.colaborador_id = ce.docente2_id_colaborador
+                    OR EXISTS (
+                        SELECT 1
+                        FROM curso_edicion_sesiones sesion_docente
+                        WHERE sesion_docente.curso_edicion_id = ce.id
+                          AND sesion_docente.docente_id = docente_usuario.colaborador_id
+                    )
+                  )
+            )
+        )
         AND ce.estadocurso IN ('en curso','programado','finalizado')
 
         GROUP BY 
@@ -406,12 +454,6 @@ LEFT JOIN evaluacion e
     ON e.curso_id = ce.id
    AND e.activo = 1
 
-LEFT JOIN colaborador col
-    ON col.id_colaborador = ce.docente_id_colaborador
-
-LEFT JOIN usuario u
-    ON u.colaborador_id = col.id_colaborador
-
 LEFT JOIN (
     SELECT
         curso COLLATE utf8mb4_unicode_ci AS curso,
@@ -426,10 +468,23 @@ LEFT JOIN (
 WHERE ce.activo = 1
   AND ce.estadocurso = 'en curso'
   AND (
-        ? = 'admin'
+        ? IN ('admin', 'administrador')
         OR (
-            ? = 'operador'
-            AND u.email = ?
+            ? IN ('operador', 'docente', 'profesor')
+            AND EXISTS (
+                SELECT 1
+                FROM usuario docente_usuario
+                WHERE LOWER(TRIM(docente_usuario.email)) = LOWER(TRIM(?))
+                  AND (
+                    docente_usuario.colaborador_id = ce.docente_id_colaborador
+                    OR docente_usuario.colaborador_id = ce.docente2_id_colaborador
+                    OR EXISTS (
+                        SELECT 1 FROM curso_edicion_sesiones sesion_docente
+                        WHERE sesion_docente.curso_edicion_id = ce.id
+                          AND sesion_docente.docente_id = docente_usuario.colaborador_id
+                    )
+                  )
+            )
         )
       )
 
@@ -478,12 +533,6 @@ SELECT
     COALESCE(cert.certificados_adjuntados, 0) AS certificados_adjuntados,
     COALESCE(cert.certificados_enviados, 0) AS certificados_enviados
 FROM curso_edicion ce
-
-LEFT JOIN colaborador col
-  ON col.id_colaborador = ce.docente_id_colaborador
-
-LEFT JOIN usuario u
-  ON u.colaborador_id = col.id_colaborador
 
 LEFT JOIN (
     SELECT
@@ -542,10 +591,23 @@ LEFT JOIN (
 WHERE ce.activo = 1
   AND {$statusFilter}
   AND (
-        ? = 'admin'
+        ? IN ('admin', 'administrador')
         OR (
-            ? = 'operador'
-            AND u.email = ?
+            ? IN ('operador', 'docente', 'profesor')
+            AND EXISTS (
+                SELECT 1
+                FROM usuario docente_usuario
+                WHERE LOWER(TRIM(docente_usuario.email)) = LOWER(TRIM(?))
+                  AND (
+                    docente_usuario.colaborador_id = ce.docente_id_colaborador
+                    OR docente_usuario.colaborador_id = ce.docente2_id_colaborador
+                    OR EXISTS (
+                        SELECT 1 FROM curso_edicion_sesiones sesion_docente
+                        WHERE sesion_docente.curso_edicion_id = ce.id
+                          AND sesion_docente.docente_id = docente_usuario.colaborador_id
+                    )
+                  )
+            )
         )
       )
 ORDER BY ce.curso ASC, ce.edicion ASC

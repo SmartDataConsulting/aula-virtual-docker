@@ -3,6 +3,12 @@
 @section('title','Evaluaciones')
 
 @section('content')
+@php
+    $canWriteEvaluations = \App\Support\BackofficePermission::allows(
+        session(\App\Support\AuthSessionKeys::USER_ROLE),
+        \App\Support\BackofficePermission::EVALUATIONS_WRITE
+    );
+@endphp
 
 <div id="evaluationsPageContext"
      class="hidden"
@@ -30,12 +36,14 @@
     <div class="flex justify-between items-center mb-6">
         <div></div>
 
+        @if($canWriteEvaluations)
         <button
             type="button"
             id="openCreateEvaluationModalBtn"
             class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
             Nueva evaluación
         </button>
+        @endif
     </div>
 
     @if($evaluations->isEmpty())
@@ -131,6 +139,7 @@
                 
                     {{-- Acciones --}}
                     <div class="flex justify-end gap-2 pt-1">
+                        @if($canWriteEvaluations)
                         <button
                             type="button"
                             data-duplicate-evaluation-id="{{ $e['id'] }}"
@@ -138,18 +147,19 @@
                             class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium transition">
                             Duplicar
                         </button>
+                        @endif
 
                         <a
                             href="{{ ($e['type_id'] ?? null) >= 3
-                                ? ($e['published']
+                                ? ($e['published'] || !$canWriteEvaluations
                                     ? route('backoffice.evaluations.work.view', [$courseId, $e['id']])
                                     : route('backoffice.evaluations.work.edit', [$courseId, $e['id']]))
-                                : ($e['published']
+                                : ($e['published'] || !$canWriteEvaluations
                                     ? route('backoffice.evaluations.view', [$courseId, $e['id']])
                                     : route('backoffice.evaluations.edit', [$courseId, $e['id']]))
                             }}"
                             class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition">
-                            {{ $e['published'] ? 'Ver' : 'Editar' }}
+                            {{ $e['published'] || !$canWriteEvaluations ? 'Ver' : 'Editar' }}
                         </a>
                     </div>
                 </div>
@@ -167,6 +177,7 @@
     'resources/js/evaluations.js'
 ])
 
+@if($canWriteEvaluations)
 <x-form-modal
     id="createEvaluationModal"
     title="Nueva evaluación"
@@ -239,3 +250,4 @@
     </div>
 
 </x-form-modal>
+@endif

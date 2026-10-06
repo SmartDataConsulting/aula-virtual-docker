@@ -91,11 +91,14 @@ $app->register(Illuminate\Redis\RedisServiceProvider::class);
 $app->middleware([
     App\Http\Middleware\RequestCorrelationId::class,
     App\Http\Middleware\RequestTiming::class,
+    App\Http\Middleware\AuditMutation::class,
 ]);
 
 $app->routeMiddleware([
     'internal.auth' => App\Http\Middleware\InternalServiceAuth::class,
     'role' => App\Http\Middleware\RoleMiddleware::class,
+    'permission' => App\Http\Middleware\PermissionMiddleware::class,
+    'course.scope' => App\Http\Middleware\CourseScopeMiddleware::class,
 ]);
 
 

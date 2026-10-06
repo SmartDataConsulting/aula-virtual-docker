@@ -1,4 +1,8 @@
 @php
+  $canWriteAttendance = \App\Support\BackofficePermission::allows(
+      session(\App\Support\AuthSessionKeys::USER_ROLE),
+      \App\Support\BackofficePermission::ATTENDANCE_WRITE
+  );
   $records = collect($attendance['items'] ?? [])->values();
   $students = $records->where('participant_type', 'alumno')->values();
   $teacher = $records->firstWhere('participant_type', 'docente');
@@ -65,19 +69,19 @@
 
     <div class="session-attendance__actions-bar">
       <div>
-        @if($isAdmin && $attendance['can_sync'])
+        @if($canWriteAttendance && $attendance['can_sync'])
           <form method="POST" action="{{ route('backoffice.attendance.sync', $session->id) }}" data-attendance-action>
             @csrf
             <button type="submit" class="session-attendance__primary-action">Conciliar con Zoom</button>
           </form>
-        @elseif($isAdmin && !($attendance['sync_enabled'] ?? false))
+        @elseif($canWriteAttendance && !($attendance['sync_enabled'] ?? false))
           <span>La sincronización con Zoom todavía no está habilitada.</span>
         @elseif($panelStatus === 'pending')
           <span>Zoom aún no ha confirmado la asistencia.</span>
         @endif
       </div>
       <div>
-        @if($isAdmin)
+        @if(\App\Support\BackofficePermission::allows(session(\App\Support\AuthSessionKeys::USER_ROLE), \App\Support\BackofficePermission::ATTENDANCE_READ))
           <a href="{{ $attendanceExportUrl ?? route('backoffice.attendance.course.export', [$course->id, 'session_id' => $session->id]) }}">Exportar sesión</a>
         @endif
         @if($showFullAttendanceLink ?? true)
@@ -106,7 +110,7 @@
         </div>
         <div class="session-attendance__teacher-status">
           <span class="attendance-status is-{{ $teacher->status }}">{{ $recordLabels[$teacher->status] ?? 'Pendiente' }}</span>
-          @if($isAdmin)
+          @if($canWriteAttendance)
             <button type="button" data-attendance-correct
                     data-action="{{ route('backoffice.attendance.update', [$teacher->session_id, $teacher->id]) }}"
                     data-participant="{{ $teacher->name }}" data-type="docente" data-status="{{ $teacher->status }}">Corregir</button>
@@ -139,9 +143,9 @@
                   <td data-label="Estado"><span class="attendance-status is-{{ $item->status }}">{{ $recordLabels[$item->status] ?? 'Pendiente' }}</span>@if($item->manual_status)<small>Corrección manual</small>@endif</td>
                   <td data-label="Ingreso">{{ $timeLabel($item->first_join_at) }}</td>
                   <td data-label="Evidencia"><strong>{{ round($item->minutes) }} min</strong><span>La duración no cambia el estado</span></td>
-                  <td data-label="Acciones"><button type="button" data-attendance-correct
+                  <td data-label="Acciones">@if($canWriteAttendance)<button type="button" data-attendance-correct
                         data-action="{{ route('backoffice.attendance.update', [$item->session_id, $item->id]) }}"
-                        data-participant="{{ $item->name }}" data-type="alumno" data-status="{{ $item->status }}">Corregir</button></td>
+                        data-participant="{{ $item->name }}" data-type="alumno" data-status="{{ $item->status }}">Corregir</button>@endif</td>
                 </tr>
               @endforeach
               </tbody>
@@ -154,7 +158,7 @@
       </div>
     </details>
 
-    @if($unresolved->isNotEmpty())
+    @if($canWriteAttendance && $unresolved->isNotEmpty())
       <details class="session-attendance__unresolved">
         <summary>Participantes por identificar <span>{{ $unresolved->count() }}</span></summary>
         <p>Asocia solamente conexiones cuya identidad puedas confirmar.</p>
@@ -172,6 +176,7 @@
     @endif
   @endif
 
+  @if($canWriteAttendance)
   <dialog class="session-attendance__dialog" data-attendance-dialog aria-labelledby="attendanceDialogTitle">
     <form method="POST" data-attendance-correction-form data-attendance-action>
       @csrf
@@ -182,6 +187,7 @@
       <div class="session-attendance__dialog-actions"><button type="button" data-attendance-dialog-close>Cancelar</button><button type="submit">Guardar corrección</button></div>
     </form>
   </dialog>
+  @endif
 
   <noscript><p class="session-attendance__noscript">Activa JavaScript para gestionar esta sesión o usa <a href="{{ route('backoffice.attendance.show', ['course' => $course->id, 'session' => $session->id]) }}">la vista completa de asistencia</a>.</p></noscript>
 </section>

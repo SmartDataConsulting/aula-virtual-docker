@@ -193,7 +193,7 @@ class CursoController extends BaseController
         // Header interno
         $rol = request()->header('X-USER-ROL', 'alumno');
 
-        if (!in_array($rol, ['admin', 'operador', 'alumno'], true)) {
+        if (!in_array($rol, ['admin', 'administrador', 'operador', 'docente', 'profesor', 'alumno'], true)) {
             return response()->json(['error' => 'rol invalido'], 400);
         }
 
@@ -208,7 +208,7 @@ class CursoController extends BaseController
 
         $rows = Cache::remember($cacheKey, $includeSuggestions ? 300 : 120, function () use ($correo, $rol, $includeSuggestions) {
 
-            if ($rol === 'admin' || $rol === 'operador') {
+            if (in_array($rol, ['admin', 'administrador', 'operador', 'docente', 'profesor'], true)) {
                 return $this->service->listarCursosBackoffice($correo, $rol);
             }
 
@@ -246,7 +246,7 @@ class CursoController extends BaseController
             }
 
             // Campos extra solo profesor
-            if ($rol === 'admin' || $rol === 'operador') {
+            if (in_array($rol, ['admin', 'administrador', 'operador', 'docente', 'profesor'], true)) {
                 $base['sesiones_hoy_sin_material'] = (int) $c->sesiones_hoy_sin_material;
                 $base['sesiones_pasadas_sin_material'] = (int) $c->sesiones_pasadas_sin_material;
                 $base['total_evaluaciones'] = (int) $c->total_evaluaciones;

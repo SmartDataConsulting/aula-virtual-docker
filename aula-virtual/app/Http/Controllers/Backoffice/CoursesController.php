@@ -762,12 +762,33 @@ public function storeAnnouncement(
     int $cursoId
 ) {
 
+    $validated = $request->validate([
+        'title' => ['required', 'string', 'max:255'],
+        'content' => ['required', 'string'],
+        'type' => ['required', 'in:general,informativo,importante'],
+        'url' => ['nullable', 'url:http,https', 'max:2048'],
+        'entidad_tipo' => ['required', 'in:curso,sesion'],
+        'entidad_id' => ['required', 'integer', 'min:1'],
+    ]);
+
+    if ($validated['entidad_tipo'] === 'curso') {
+        $validated['entidad_id'] = $cursoId;
+    } else {
+        $role = (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '');
+        $sessionsResult = $this->sesionService->listarSesionesCurso($cursoId, $role);
+        $sessionIds = $sessionsResult->ok()
+            ? collect($sessionsResult->data()['sessions'] ?? [])->pluck('id')->map(fn ($id) => (int) $id)
+            : collect();
+        abort_unless($sessionIds->contains((int) $validated['entidad_id']), 403);
+    }
+
     $payload = [
-        'titulo'       => $request->title,
-        'contenido'    => $request->content,
-        'tipo'         => $request->type,
-        'entidad_tipo' => $request->entidad_tipo,
-        'entidad_id'   => $request->entidad_id,
+        'titulo'       => $validated['title'],
+        'contenido'    => $validated['content'],
+        'enlace_url'   => $validated['url'] ?? null,
+        'tipo'         => $validated['type'],
+        'entidad_tipo' => $validated['entidad_tipo'],
+        'entidad_id'   => $validated['entidad_id'],
     ];
     
     $result = $this->announcementService->crearAnuncio($payload);
@@ -796,10 +817,18 @@ public function updateAnnouncement(
     int $announcementId
 ) {
 
+    $validated = $request->validate([
+        'title' => ['required', 'string', 'max:255'],
+        'content' => ['required', 'string'],
+        'type' => ['required', 'in:general,informativo,importante'],
+        'url' => ['nullable', 'url:http,https', 'max:2048'],
+    ]);
+
     $payload = [
-        'titulo'    => $request->title,
-        'contenido' => $request->content,
-        'tipo'      => $request->type,
+        'titulo'     => $validated['title'],
+        'contenido'  => $validated['content'],
+        'enlace_url' => $validated['url'] ?? null,
+        'tipo'       => $validated['type'],
     ];
 
     $result = $this->announcementService
@@ -870,8 +899,9 @@ public function destroyAnnouncement(
         $selectedSession = $sessions->firstWhere('id', $session);
     }
 
-    // 🔹 Traer anuncios del curso
-    $result = $this->announcementService->listarAnuncios('curso', $course);
+    $entityType = $selectedSession ? 'sesion' : 'curso';
+    $entityId = $selectedSession ? (int) $selectedSession->id : $course;
+    $result = $this->announcementService->listarAnuncios($entityType, $entityId);
 
     $announcements = $result->ok()
         ? collect($result->data()['announcements'] ?? [])

@@ -67,7 +67,10 @@ class AnnouncementService
             'id'         => (int) ($item['id'] ?? 0),
             'title'      => (string) ($item['titulo'] ?? ''),
             'content'    => (string) ($item['contenido'] ?? ''),
+            'url'        => $item['enlace_url'] ?? null,
             'type'       => (string) ($item['tipo'] ?? 'general'),
+            'entity_type'=> $item['entidad_tipo'] ?? null,
+            'entity_id'  => $item['entidad_id'] ?? null,
             'created_at' => (string) ($item['creado_en'] ?? ''),
             'updated_at' => (string) ($item['actualizado_en'] ?? ''),
             'leido'      => (int) ($item['leido'] ?? 0),
@@ -102,9 +105,12 @@ class AnnouncementService
 
             'title'      => $data['title'] ?? $data['titulo'] ?? 'Anuncio',
             'content'    => $data['content'] ?? $data['contenido'] ?? null,
-            'type'    => $data['tipo'] ?? null,
-            'created_at' => $data['created_at'] ?? null,
-            'updated_at' => $data['updated_at'] ?? null,
+            'url'        => $data['url'] ?? $data['enlace_url'] ?? null,
+            'type'       => $data['type'] ?? $data['tipo'] ?? 'general',
+            'entity_type'=> $data['entity_type'] ?? $data['entidad_tipo'] ?? null,
+            'entity_id'  => $data['entity_id'] ?? $data['entidad_id'] ?? null,
+            'created_at' => $data['created_at'] ?? $data['creado_en'] ?? null,
+            'updated_at' => $data['updated_at'] ?? $data['actualizado_en'] ?? null,
         ];
     }
 

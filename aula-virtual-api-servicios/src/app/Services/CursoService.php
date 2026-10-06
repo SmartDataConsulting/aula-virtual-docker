@@ -28,6 +28,11 @@ class CursoService
         return $this->repo->listarCursosBackoffice($correo, $rol);
     }
 
+    public function usuarioPuedeAccederBackoffice(int $cursoId, string $correo, string $rol): bool
+    {
+        return $this->repo->usuarioPuedeAccederBackoffice($cursoId, $correo, $rol);
+    }
+
     public function obtener(int $id)
     {
         return $this->repo->obtener($id);

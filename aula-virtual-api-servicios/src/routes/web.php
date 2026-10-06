@@ -23,19 +23,19 @@ $router->group(['prefix' => 'v1', 'middleware' => 'internal.auth'], function () 
 
 $router->post('/cursos/{courseId}/sesiones/{sessionId}/zoom/join', 'AttendanceController@join');
 $router->get('/asistencias/cursos/resumen', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => 'permission:attendance.read',
     'uses' => 'AttendanceController@summaries',
 ]);
 $router->get('/cursos/{courseId}/asistencias/resumen', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => ['permission:attendance.read', 'course.scope:course'],
     'uses' => 'AttendanceController@courseSummary',
 ]);
 $router->get('/cursos/{courseId}/asistencias', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => ['permission:attendance.read', 'course.scope:course'],
     'uses' => 'AttendanceController@course',
 ]);
 $router->get('/cursos/{courseId}/sesiones/{sessionId}/asistencias', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => ['permission:attendance.read', 'course.scope:session'],
     'uses' => 'AttendanceController@session',
 ]);
 $router->get('/alumno/cursos/{courseId}/asistencia', [
@@ -47,15 +47,15 @@ $router->get('/alumno/cursos/{courseId}/certificado', [
     'uses' => 'AlumnoController@obtenerCertificadoAlumnoCurso',
 ]);
 $router->patch('/sesiones/{sessionId}/asistencias/{attendanceId}', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => ['permission:attendance.write', 'course.scope:session'],
     'uses' => 'AttendanceController@update',
 ]);
 $router->post('/sesiones/{sessionId}/asistencias/identify', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => ['permission:attendance.write', 'course.scope:session'],
     'uses' => 'AttendanceController@identify',
 ]);
 $router->post('/sesiones/{sessionId}/asistencias/sync', [
-    'middleware' => 'role:admin,administrador,operador,docente,profesor',
+    'middleware' => ['permission:attendance.write', 'course.scope:session'],
     'uses' => 'AttendanceController@sync',
 ]);
 
@@ -95,7 +95,7 @@ $router->get(
 $router->get(
     '/evaluaciones/cursos',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.read',
         'uses' => 'CursoController@listarParaEvaluaciones'
     ]
 );
@@ -103,7 +103,7 @@ $router->get(
 $router->get(
     '/calificaciones/cursos',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.read',
         'uses' => 'CursoController@listarParaCalificaciones'
     ]
 );
@@ -111,7 +111,7 @@ $router->get(
 $router->get(
     '/calificaciones/cursos/{cursoId}',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => ['permission:evaluations.read', 'course.scope:course'],
         'uses' => 'EvaluacionController@resumenCalificacionesCurso'
     ]
 );
@@ -119,7 +119,7 @@ $router->get(
 $router->get(
     '/cursos/{cursoId}/evaluaciones',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => ['permission:evaluations.read', 'course.scope:course'],
         'uses' => 'EvaluacionController@listarPorCurso'
     ]
 );
@@ -127,7 +127,7 @@ $router->get(
 $router->post(
     '/evaluaciones',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@crear'
     ]
 );
@@ -135,7 +135,7 @@ $router->post(
 $router->post(
     '/evaluaciones/{evaluacionId}/autosave',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@autosave'
     ]
 );
@@ -143,7 +143,7 @@ $router->post(
 $router->post(
     '/evaluaciones/{evaluacionId}/trabajo',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@guardarTrabajo'
     ]
 );
@@ -151,7 +151,7 @@ $router->post(
 $router->post(
     '/docente/evaluaciones/{evaluacionId}/subsanaciones/examen',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@registrarSubsanacionExamen'
     ]
 );
@@ -159,7 +159,7 @@ $router->post(
 $router->post(
     '/docente/evaluaciones/{evaluacionId}/subsanaciones/trabajo',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@registrarSubsanacionTrabajo'
     ]
 );
@@ -167,7 +167,7 @@ $router->post(
 $router->get(
     '/docente/evaluaciones/{evaluacionId}/subsanaciones',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => ['permission:evaluations.read', 'course.scope:evaluation'],
         'uses' => 'EvaluacionController@listarSubsanaciones'
     ]
 );
@@ -175,7 +175,7 @@ $router->get(
 $router->put(
     '/docente/evaluaciones/{evaluacionId}/subsanaciones/{subsanacionId}',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@actualizarSubsanacion'
     ]
 );
@@ -183,7 +183,7 @@ $router->put(
 $router->get(
     '/docente/subsanaciones/evidencia',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.read',
         'uses' => 'EvaluacionController@descargarEvidenciaSubsanacion'
     ]
 );
@@ -191,7 +191,7 @@ $router->get(
 $router->post(
     '/evaluaciones/{evaluacionId}/publicar',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@publicar'
     ]
 );
@@ -199,7 +199,7 @@ $router->post(
 $router->post(
     '/evaluaciones/{evaluacionId}/duplicar',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.write',
         'uses' => 'EvaluacionController@duplicar'
     ]
 );
@@ -212,7 +212,7 @@ $router->get(
 $router->get(
     '/evaluaciones/{evaluacionId}',
     [
-        'middleware' => 'role:admin,operador,alumno',
+        'middleware' => ['role:admin,administrador,operador,docente,profesor,alumno', 'course.scope:evaluation'],
         'uses' => 'EvaluacionController@obtener'
     ]
 );
@@ -220,7 +220,7 @@ $router->get(
 $router->get(
     '/evaluaciones/{evaluacionId}/participantes',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => ['permission:evaluations.read', 'course.scope:evaluation'],
         'uses' => 'EvaluacionController@listarParticipantes'
     ]
 );
@@ -228,7 +228,7 @@ $router->get(
 $router->get(
     '/evaluaciones/{evaluacionId}/trabajo',
     [
-        'middleware' => 'role:admin,operador,alumno',
+        'middleware' => ['role:admin,administrador,operador,docente,profesor,alumno', 'course.scope:evaluation'],
         'uses' => 'EvaluacionController@obtenerTrabajo'
     ]
 );
@@ -236,7 +236,7 @@ $router->get(
 $router->get(
     '/evaluaciones/{evaluacionId}/entregas/{entregaId}/revision',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => ['permission:evaluations.read', 'course.scope:evaluation'],
         'uses' => 'EvaluacionController@obtenerDetalleRevision'
     ]
 );
@@ -244,7 +244,7 @@ $router->get(
 $router->post(
     '/evaluaciones/{evaluacionId}/entregas/{entregaId}/revision',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => ['permission:evaluations.write', 'course.scope:evaluation'],
         'uses' => 'EvaluacionController@guardarDetalleRevision'
     ]
 );
@@ -284,7 +284,7 @@ $router->get(
 $router->get(
 '/backoffice/evaluaciones/entregas/archivos/{archivoId}/descargar',
     [
-        'middleware' => 'role:admin,operador',
+        'middleware' => 'permission:evaluations.read',
         'uses' => 'EvaluacionRendicionController@descargarArchivoEntregaBackoffice'
     ]
 );
@@ -377,30 +377,42 @@ $router->get(
 
 $router->get(
     '/cursos/{cursoId}/sesiones/{sesionId}/evaluaciones',
-    'SesionController@obtenerEvaluaciones'
+    [
+        'middleware' => ['permission:evaluations.read', 'course.scope:course'],
+        'uses' => 'SesionController@obtenerEvaluaciones',
+    ]
 );
 
 $router->get(
     '/cursos/{cursoId}/evaluaciones/plan',
     [
-        'middleware' => 'role:admin,operador,docente,profesor',
+        'middleware' => ['permission:evaluations.read', 'course.scope:course'],
         'uses' => 'SesionController@planEvaluacionCurso'
     ]
 );
 
 $router->post(
     '/sesiones/{sesionId}/evaluacion',
-    'SesionController@actualizarEvaluacion'
+    [
+        'middleware' => ['permission:evaluations.write', 'course.scope:session'],
+        'uses' => 'SesionController@actualizarEvaluacion',
+    ]
 );
 
 $router->put(
     '/sesiones/{sesionId}/evaluacion/{evaluacionId}',
-    'SesionController@actualizarFechaLimiteEvaluacion'
+    [
+        'middleware' => ['permission:evaluations.write', 'course.scope:session'],
+        'uses' => 'SesionController@actualizarFechaLimiteEvaluacion',
+    ]
 );
 
 $router->delete(
     '/sesiones/{sesionId}/evaluacion/{evaluacionId}',
-    'SesionController@eliminarEvaluacion'
+    [
+        'middleware' => ['permission:evaluations.write', 'course.scope:session'],
+        'uses' => 'SesionController@eliminarEvaluacion',
+    ]
 );
 
 /*
@@ -415,64 +427,64 @@ $router->delete(
 // Registrar inicio de carga (Aula ya creó sesión resumible en Drive)
 $router->post(
     '/sesiones/{sesionId}/video/upload-started',
-    'SesionVideoController@uploadStarted'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@uploadStarted']
 );
 
 // Actualizar progreso de carga (bytes subidos)
 $router->post(
     '/sesiones/{sesionId}/video/upload-progress',
-    'SesionVideoController@uploadProgress'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@uploadProgress']
 );
 
 // Finalizar carga y registrar drive_file_id
 $router->post(
     '/sesiones/{sesionId}/video/upload-completed',
-    'SesionVideoController@uploadCompleted'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@uploadCompleted']
 );
 
 // Registrar error de carga
 $router->post(
     '/sesiones/{sesionId}/video/upload-error',
-    'SesionVideoController@uploadError'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@uploadError']
 );
 
 // Cancelar carga
 $router->post(
     '/sesiones/{sesionId}/video/upload-cancelled',
-    'SesionVideoController@uploadCancelled'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@uploadCancelled']
 );
 
 // Actualizar estado del video: processing / ready / missing
 $router->post(
     '/sesiones/{sesionId}/video/status-updated',
-    'SesionVideoController@statusUpdated'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@statusUpdated']
 );
 
 // Eliminar registro de video
 $router->post(
     '/sesiones/{sesionId}/video/deleted',
-    'SesionVideoController@deleted'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@deleted']
 );
 
 // Consultar progreso para reanudación
 $router->post(
     '/sesiones/{sesionId}/video/chat-uploaded',
-    'SesionVideoController@chatUploaded'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@chatUploaded']
 );
 
 $router->post(
     '/sesiones/{sesionId}/video/chat-deleted',
-    'SesionVideoController@chatDeleted'
+    ['middleware' => ['permission:video.write', 'course.scope:session'], 'uses' => 'SesionVideoController@chatDeleted']
 );
 
 $router->get(
     '/sesiones/{sesionId}/video/upload-progress',
-    'SesionVideoController@getUploadProgress'
+    ['middleware' => ['permission:video.read', 'course.scope:session'], 'uses' => 'SesionVideoController@getUploadProgress']
 );
 
 $router->get(
     '/sesiones/{sesionId}/video/status',
-    'SesionVideoController@status'
+    ['middleware' => ['permission:video.read', 'course.scope:session'], 'uses' => 'SesionVideoController@status']
 );
 
 /*
@@ -481,11 +493,11 @@ $router->get(
 |--------------------------------------------------------------------------
 */
 
-$router->get('/anuncios/{entidadTipo}/{entidadId}', 'CursoAnuncioController@listar');
+$router->get('/anuncios/{entidadTipo}/{entidadId}', ['middleware' => ['permission:announcements.read', 'course.scope:announcement'], 'uses' => 'CursoAnuncioController@listar']);
 $router->post('/anuncios/{entidadTipo}/{entidadId}/con-lectura', 'CursoAnuncioController@listarConEstadoLectura');
-$router->post('/anuncios', 'CursoAnuncioController@crear');
-$router->put('/anuncios/{anuncioId}', 'CursoAnuncioController@editar');
-$router->delete('/anuncios/{anuncioId}', 'CursoAnuncioController@eliminar');
+$router->post('/anuncios', ['middleware' => ['permission:announcements.write', 'course.scope:announcement'], 'uses' => 'CursoAnuncioController@crear']);
+$router->put('/anuncios/{anuncioId}', ['middleware' => ['permission:announcements.write', 'course.scope:announcement'], 'uses' => 'CursoAnuncioController@editar']);
+$router->delete('/anuncios/{anuncioId}', ['middleware' => ['permission:announcements.write', 'course.scope:announcement'], 'uses' => 'CursoAnuncioController@eliminar']);
 $router->post('/anuncios/{anuncioId}/leer', 'CursoAnuncioController@marcarLeido');
 $router->post('/anuncios/{entidadTipo}/{entidadId}/leer-todos', 'CursoAnuncioController@marcarTodosLeidos');
 
@@ -495,11 +507,11 @@ $router->post('/anuncios/{entidadTipo}/{entidadId}/leer-todos', 'CursoAnuncioCon
 |--------------------------------------------------------------------------
 */
 
-$router->get('/sesiones/{sesionId}/materiales', 'SesionMaterialController@listar');
-$router->post('/sesiones/{sesionId}/materiales', 'SesionMaterialController@crear');
-$router->put('/sesiones/{sesionId}/materiales/{id}', 'SesionMaterialController@actualizar');
-$router->delete('/sesiones/{sesionId}/materiales/{id}', 'SesionMaterialController@eliminar');
-$router->get('/materiales/{id}/descargar', 'SesionMaterialController@descargar');
+$router->get('/sesiones/{sesionId}/materiales', ['middleware' => ['permission:materials.read', 'course.scope:session'], 'uses' => 'SesionMaterialController@listar']);
+$router->post('/sesiones/{sesionId}/materiales', ['middleware' => ['permission:materials.write', 'course.scope:session'], 'uses' => 'SesionMaterialController@crear']);
+$router->put('/sesiones/{sesionId}/materiales/{id}', ['middleware' => ['permission:materials.write', 'course.scope:session'], 'uses' => 'SesionMaterialController@actualizar']);
+$router->delete('/sesiones/{sesionId}/materiales/{id}', ['middleware' => ['permission:materials.write', 'course.scope:session'], 'uses' => 'SesionMaterialController@eliminar']);
+$router->get('/materiales/{id}/descargar', ['middleware' => ['permission:materials.read', 'course.scope:material'], 'uses' => 'SesionMaterialController@descargar']);
 
 /*
 |--------------------------------------------------------------------------

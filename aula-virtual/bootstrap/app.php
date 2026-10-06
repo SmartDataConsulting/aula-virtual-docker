@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\RequestTiming::class);
         $middleware->alias([
             'auth.session' => \App\Http\Middleware\EnsureSessionAuthenticated::class,
+            'permission' => \App\Http\Middleware\EnsureBackofficePermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

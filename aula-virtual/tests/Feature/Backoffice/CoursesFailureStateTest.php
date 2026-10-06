@@ -27,6 +27,6 @@ class CoursesFailureStateTest extends TestCase
         ])->render();
 
         self::assertStringContainsString('No se pudieron cargar los cursos.', $html);
-        self::assertStringContainsString('No hay cursos activos asignados.', $html);
+        self::assertStringContainsString('No hay cursos en curso asignados.', $html);
     }
 }

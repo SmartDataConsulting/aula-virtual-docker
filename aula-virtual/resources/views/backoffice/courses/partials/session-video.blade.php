@@ -1,3 +1,9 @@
+@php
+    $canWriteVideo = \App\Support\BackofficePermission::allows(
+        session(\App\Support\AuthSessionKeys::USER_ROLE),
+        \App\Support\BackofficePermission::VIDEO_WRITE
+    );
+@endphp
 @if(empty($session?->id))
 <div class="session-panel">
     <div class="session-panel-title">Video de la sesión</div>
@@ -15,12 +21,14 @@
                 <div class="session-panel-title">Video de la sesión</div>
                 <div class="session-panel-subtitle">Grabación disponible para los alumnos.</div>
             </div>
+            @if($canWriteVideo)
             <button id="deleteVideoBtn"
                     data-session-id="{{ $session->id }}"
                     class="btn-danger btn-danger-strong">
                 <span aria-hidden="true">🗑</span>
                 Eliminar video
             </button>
+            @endif
         </div>
 
         <div class="video-ready-card">
@@ -58,12 +66,14 @@
                     <a class="btn-secondary" href="{{ route('sessions.video.chat.download', ['session' => $session->id]) }}">
                         Descargar TXT
                     </a>
+                    @if($canWriteVideo)
                     <button type="button" class="btn-danger" data-delete-video-chat data-session-id="{{ $session->id }}">
                         Eliminar chat
                     </button>
+                    @endif
                 </div>
             </div>
-        @else
+        @elseif($canWriteVideo)
             <div class="session-info-panel mt-4">
                 <div class="session-panel-subtitle mb-3">No se adjuntó chat de Zoom para esta grabación.</div>
                 <div class="session-panel-actions justify-start">
@@ -90,7 +100,7 @@
         Video subido correctamente. Estamos preparando la reproducción; puedes salir de esta página y volver en unos minutos.
     </div>
 </div>
-@else
+@elseif($canWriteVideo)
 <div class="session-panel">
     <div id="videoUploadContainer"
          data-course-id="{{ $course->id }}"
@@ -142,5 +152,10 @@
             <div id="progressBar" class="upload-progress-bar">0%</div>
         </div>
     </div>
+</div>
+@else
+<div class="session-panel">
+    <div class="session-panel-title">Video de la sesión</div>
+    <div class="session-empty-panel">Aún no hay video disponible para esta sesión.</div>
 </div>
 @endif

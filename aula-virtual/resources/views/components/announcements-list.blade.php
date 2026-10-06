@@ -1,7 +1,6 @@
 <div class="p-6 space-y-6">
 @php
-$isSession = request()->routeIs('mis-cursos.sessions.announcements')
-    || request()->routeIs('backoffice.courses.show');
+$isSession = isset($session) && !empty($session->id);
 @endphp
 
 {{-- =========================
@@ -62,8 +61,9 @@ $isSession = request()->routeIs('mis-cursos.sessions.announcements')
         data-id="{{ $anuncio->id }}"
         data-titulo="{{ $anuncio->title }}"
         data-contenido="{{ $anuncio->content }}"
+        data-url="{{ $anuncio->url ?? '' }}"
         data-tipo="{{ $anuncio->type }}"
-        data-update-url="{{ route('backoffice.courses.announcements.update', [$course->id, $anuncio->id]) }}">
+        data-update-url="{{ $mode === 'edit' ? route('backoffice.courses.announcements.update', [$course->id, $anuncio->id]) : '' }}">
         {{-- HEADER --}}
         <div class="flex justify-between items-start mb-2">
 
@@ -116,6 +116,15 @@ $isSession = request()->routeIs('mis-cursos.sessions.announcements')
         <div class="text-sm text-gray-700 whitespace-pre-line">
             {{ $anuncio->content }}
         </div>
+
+        @if(!empty($anuncio->url))
+            <a href="{{ $anuncio->url }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="mt-3 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-900">
+                Abrir enlace
+            </a>
+        @endif
 
     </div>
     @if($mode === 'edit')
@@ -171,6 +180,12 @@ $isSession = request()->routeIs('mis-cursos.sessions.announcements')
         required
         class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
 
+    <input name="url"
+        type="url"
+        maxlength="2048"
+        placeholder="Enlace opcional (https://...)"
+        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+
 </x-form-modal>
 
 {{-- =========================
@@ -201,6 +216,13 @@ $isSession = request()->routeIs('mis-cursos.sessions.announcements')
         id="edit_annuncio_content"
         rows="3"
         class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+
+    <input name="url"
+        id="edit_annuncio_url"
+        type="url"
+        maxlength="2048"
+        placeholder="Enlace opcional (https://...)"
+        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
 
 </x-form-modal>
 </div>

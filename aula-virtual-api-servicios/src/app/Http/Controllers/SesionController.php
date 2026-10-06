@@ -7,14 +7,17 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use App\Services\SesionService;
+use App\Services\CursoService;
 
 class SesionController extends BaseController
 {
     protected SesionService $service;
+    protected CursoService $cursoService;
 
-    public function __construct(SesionService $service)
+    public function __construct(SesionService $service, CursoService $cursoService)
     {
         $this->service = $service;
+        $this->cursoService = $cursoService;
     }
 
     /**
@@ -35,11 +38,15 @@ class SesionController extends BaseController
             abort(400, 'Missing X-USER-ROL header');
         }
 
-        if ($rol !== 'admin' && $rol !== 'operador' && !$correo) {
+        if (!in_array($rol, ['admin', 'administrador'], true) && !$correo) {
             abort(400, 'Missing X-USER-EMAIL header');
         }
 
-        if ($rol === 'admin' || $rol === 'operador') {
+        if (in_array($rol, ['admin', 'administrador', 'operador', 'docente', 'profesor'], true)) {
+            if (!$this->cursoService->usuarioPuedeAccederBackoffice((int) $cursoId, (string) $correo, (string) $rol)) {
+                abort(403, 'No autorizado para acceder a este curso');
+            }
+
             $rows = $this->service->listarPorCursoProfesor((int)$cursoId, $rol);
         } else {
             $rows = $this->service->listarPorCursoAlumno(
@@ -79,9 +86,11 @@ class SesionController extends BaseController
                 'meeting' => $s->meeting ?? null,
             ];
 
-            if ($rol === 'admin' || $rol === 'operador') {
+            if (in_array($rol, ['admin', 'administrador', 'operador', 'docente', 'profesor'], true)) {
                 $base['falta_material'] = (int) $s->falta_material;
                 $base['existe_evaluacion'] = (int) $s->existe_evaluacion;
+                $base['materiales'] = $s->materiales ?? [];
+                $base['anuncios'] = $s->anuncios ?? [];
             }
 
             return $base;

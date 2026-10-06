@@ -1,5 +1,9 @@
 <div class="space-y-5">
     @php
+        $canWriteEvaluations = \App\Support\BackofficePermission::allows(
+            session(\App\Support\AuthSessionKeys::USER_ROLE),
+            \App\Support\BackofficePermission::EVALUATIONS_WRITE
+        );
         $allSessions = collect($sessions ?? [])->values();
         $totalSessions = $allSessions->count();
         $middleSessionNumber = $totalSessions > 0 ? (int) ceil($totalSessions / 2) : null;
@@ -27,6 +31,7 @@
          class="hidden"
          data-course-id="{{ $course->id ?? $cursoId ?? 0 }}"
          data-session-id="{{ $session->id ?? 0 }}"
+         data-can-write="{{ $canWriteEvaluations ? '1' : '0' }}"
          data-template-url="{{ route('backoffice.courses.evaluation-plan.template', $course->id ?? $cursoId ?? 0) }}"
          data-evaluaciones-asignadas="{{ base64_encode(json_encode($session->evaluaciones_asignadas ?? [])) }}"
          data-evaluaciones-disponibles="{{ base64_encode(json_encode($session->evaluaciones_disponibles ?? [])) }}">
@@ -39,6 +44,7 @@
         </p>
     </div>
 
+    @if($canWriteEvaluations)
     <section class="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -106,6 +112,7 @@
             </div>
         @endif
     </section>
+    @endif
 
     <section class="rounded-xl border border-slate-200 bg-white p-4">
         <div class="mb-3 flex items-center justify-between gap-3">
@@ -153,6 +160,7 @@
         </div>
     </div>
 
+    @if($canWriteEvaluations)
     <div class="space-y-3">
         <label class="text-sm font-medium text-slate-700">
             Actividades publicadas disponibles
@@ -160,7 +168,9 @@
         <div id="evaluacionesDisponibles" class="grid gap-4">
         </div>
     </div>
+    @endif
 
+    @if($canWriteEvaluations)
     <div class="pt-2 flex justify-end">
         <button type="button"
                 id="assignEvaluationsBtn"
@@ -168,6 +178,7 @@
             Asignar hito
         </button>
     </div>
+    @endif
 
     <div id="evaluationSyncStatus"
          class="hidden rounded-lg border px-3 py-2 text-sm">

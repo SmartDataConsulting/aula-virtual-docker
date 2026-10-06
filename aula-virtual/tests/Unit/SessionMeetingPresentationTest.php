@@ -49,4 +49,30 @@ class SessionMeetingPresentationTest extends TestCase
         $view->assertSee('Disponible 15 minutos antes');
         $view->assertDontSee('href=', false);
     }
+
+    public function test_privileged_copy_includes_only_available_access_lines(): void
+    {
+        $session = (object) [
+            'id' => 8,
+            'curso_edicion_id' => 3,
+            'meeting' => (object) [
+                'scheduled' => true,
+                'availability' => 'open',
+                'can_join' => true,
+                'join_url' => 'https://zoom.us/j/123',
+                'meeting_id' => null,
+                'access_code' => 'ABC123',
+            ],
+        ];
+
+        $view = $this->view('components.session-meeting', [
+            'session' => $session,
+            'privileged' => true,
+        ]);
+
+        $view->assertSee('Código: ABC123');
+        $view->assertSee('Enlace: https://zoom.us/j/123');
+        $view->assertDontSee('ID:');
+        $view->assertSee('Copiar datos de acceso y enlace de Zoom');
+    }
 }

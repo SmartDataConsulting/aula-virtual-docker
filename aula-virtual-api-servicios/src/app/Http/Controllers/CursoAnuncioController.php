@@ -42,7 +42,10 @@ class CursoAnuncioController extends Controller
                 'id'             => (int) $a->id,
                 'titulo'         => $a->titulo,
                 'contenido'      => $a->contenido,
+                'enlace_url'     => $a->enlace_url ?? null,
                 'tipo'           => $a->tipo,
+                'entidad_tipo'   => $a->entidad_tipo,
+                'entidad_id'     => (int) $a->entidad_id,
                 'creado_por'     => (int) $a->creado_por,
                 'creado_en'      => $a->creado_en,
                 'actualizado_en' => $a->actualizado_en,
@@ -95,7 +98,10 @@ class CursoAnuncioController extends Controller
                 'id'             => (int) $a->id,
                 'titulo'         => $a->titulo,
                 'contenido'      => $a->contenido,
+                'enlace_url'     => $a->enlace_url ?? null,
                 'tipo'           => $a->tipo,
+                'entidad_tipo'   => $a->entidad_tipo,
+                'entidad_id'     => (int) $a->entidad_id,
                 'creado_por'     => (int) $a->creado_por,
                 'creado_en'      => $a->creado_en,
                 'actualizado_en' => $a->actualizado_en,
@@ -158,9 +164,6 @@ public function marcarAnuncioComoLeido(
 
         $this->service->marcarLeido((int)$anuncioId, $correo);
 
-        // 🔥 Mejor que flush global
-        Cache::flush();
-
         return response()->json(['success' => true]);
     }
 
@@ -203,6 +206,7 @@ public function marcarAnuncioComoLeido(
         $entidadId   = $request->input('entidad_id');
         $titulo      = trim((string) $request->input('titulo'));
         $contenido   = trim((string) $request->input('contenido'));
+        $enlaceUrl   = $this->validatedUrl($request->input('enlace_url'));
         $tipo        = $request->input('tipo', 'importante');
         $creadoPor   = (int) $request->input('creado_por');
 
@@ -218,17 +222,19 @@ public function marcarAnuncioComoLeido(
             return response()->json(['error' => 'titulo y contenido son requeridos'], 400);
         }
 
+        if ($enlaceUrl === false) {
+            return response()->json(['error' => 'enlace_url invalido'], 422);
+        }
+
         $id = $this->service->crear(
             $entidadTipo,
             (int)$entidadId,
             $titulo,
             $contenido,
+            $enlaceUrl,
             $tipo,
             $creadoPor
         );
-
-        // Invalida cache de esa entidad
-        Cache::forget("anuncios_{$entidadTipo}_{$entidadId}");
 
         return response()->json([
             'success' => true,
@@ -244,10 +250,16 @@ public function marcarAnuncioComoLeido(
 
     try {
 
+        $enlaceUrl = $this->validatedUrl($request->input('enlace_url'));
+        if ($enlaceUrl === false) {
+            return response()->json(['error' => 'enlace_url invalido'], 422);
+        }
+
         $this->service->editar(
             (int)$anuncioId,
             trim((string)$request->input('titulo')),
             trim((string)$request->input('contenido')),
+            $enlaceUrl,
             $request->input('tipo', 'importante'),
             (int)$request->input('editado_por')
         );
@@ -285,4 +297,21 @@ public function marcarAnuncioComoLeido(
         return response()->json(['error' => 'error interno'], 500);
     }
 }
+
+    private function validatedUrl($value)
+    {
+        $url = trim((string) $value);
+
+        if ($url === '') {
+            return null;
+        }
+
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+        return strlen($url) <= 2048
+            && in_array($scheme, ['http', 'https'], true)
+            && filter_var($url, FILTER_VALIDATE_URL) !== false
+            ? $url
+            : false;
+    }
 }

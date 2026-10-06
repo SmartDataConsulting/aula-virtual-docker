@@ -21,7 +21,12 @@
 
     $meetingId = trim((string) ($meeting->meeting_id ?? ''));
     $accessCode = trim((string) ($meeting->access_code ?? ''));
-    $copyValue = trim('ID: '.$meetingId.($accessCode !== '' ? "\nCódigo: ".$accessCode : ''));
+    $joinUrl = trim((string) ($meeting->join_url ?? ''));
+    $copyLines = [];
+    if ($meetingId !== '') $copyLines[] = 'ID: '.$meetingId;
+    if ($accessCode !== '') $copyLines[] = 'Código: '.$accessCode;
+    if ($joinUrl !== '') $copyLines[] = 'Enlace: '.$joinUrl;
+    $copyValue = implode("\n", $copyLines);
     $courseId = (int) (data_get($session, 'curso_edicion_id') ?: data_get($session, 'curso_id', 0));
     $sessionId = (int) data_get($session, 'id', 0);
 @endphp
@@ -63,11 +68,11 @@
             </form>
         @endif
 
-        @if($privileged && $meetingId !== '')
+        @if($privileged && $copyValue !== '')
             <button type="button"
                     class="session-meeting__copy"
                     data-copy-meeting="{{ $copyValue }}"
-                    aria-label="Copiar ID y código de acceso de Zoom">
+                    aria-label="Copiar datos de acceso y enlace de Zoom">
                 Copiar acceso
             </button>
             <span class="session-meeting__feedback" data-copy-meeting-feedback role="status" aria-live="polite"></span>

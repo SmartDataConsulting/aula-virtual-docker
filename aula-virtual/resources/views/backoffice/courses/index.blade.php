@@ -7,12 +7,12 @@
 @section('content')
 @php
   $activeTab = $activeTab ?? 'activos';
-  $isAdmin = session(\App\Support\AuthSessionKeys::USER_ROLE) === 'admin';
+  $isAdmin = in_array(session(\App\Support\AuthSessionKeys::USER_ROLE), ['admin', 'administrador'], true);
   $tabConfig = [
     'activos' => [
-      'label' => 'Activos',
-      'title' => 'Cursos activos',
-      'empty' => 'No hay cursos activos asignados.',
+      'label' => 'En curso',
+      'title' => 'Cursos en curso',
+      'empty' => 'No hay cursos en curso asignados.',
     ],
     'programados' => [
       'label' => 'Programados',
@@ -51,7 +51,7 @@
 
     <dl class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[620px]">
       <div class="rounded-md border border-slate-200 bg-white px-3 py-2">
-        <dt class="text-xs font-medium text-slate-500">Cursos activos</dt>
+        <dt class="text-xs font-medium text-slate-500">Cursos en curso</dt>
         <dd class="mt-1 text-xl font-bold text-slate-950">{{ $counts['activos'] ?? 0 }}</dd>
       </div>
       <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">

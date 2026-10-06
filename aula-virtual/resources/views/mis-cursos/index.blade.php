@@ -12,10 +12,10 @@
 
     $tabConfig = [
       'activos' => [
-        'label' => 'En progreso',
-        'title' => 'Cursos en progreso',
+        'label' => 'En curso',
+        'title' => 'Cursos en curso',
         'items' => $groups['activos'] ?? collect(),
-        'empty' => 'No tienes cursos en progreso por ahora.',
+        'empty' => 'No tienes cursos en curso por ahora.',
         'empty_detail' => 'Cuando inicies un curso, aparecera aqui con tu avance y siguiente paso.',
       ],
       'completados' => [
@@ -51,7 +51,7 @@
 
       <div class="student-courses-summary" aria-label="Resumen de cursos">
         <article>
-          <span>En progreso</span>
+          <span>En curso</span>
           <strong>{{ $totalActive }}</strong>
         </article>
         <article>

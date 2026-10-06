@@ -21,6 +21,7 @@ class CursoAnuncioRepository
                 entidad_id,
                 titulo,
                 contenido,
+                enlace_url,
                 tipo,
                 creado_por,
                 editado_por,
@@ -66,6 +67,7 @@ class CursoAnuncioRepository
         int $entidadId,
         string $titulo,
         string $contenido,
+        ?string $enlaceUrl,
         string $tipo,
         int $creadoPor
     ): int {
@@ -75,6 +77,7 @@ class CursoAnuncioRepository
             $entidadId,
             $titulo,
             $contenido,
+            $enlaceUrl,
             $tipo,
             $creadoPor
         ) {
@@ -86,6 +89,7 @@ class CursoAnuncioRepository
                     'entidad_id'     => $entidadId,
                     'titulo'         => $titulo,
                     'contenido'      => $contenido,
+                    'enlace_url'     => $enlaceUrl,
                     'tipo'           => $tipo,
                     'activo'         => 1,
                     'creado_por'     => $creadoPor,
@@ -102,6 +106,7 @@ class CursoAnuncioRepository
         int $anuncioId,
         string $titulo,
         string $contenido,
+        ?string $enlaceUrl,
         string $tipo,
         int $editadoPor
     ): void {
@@ -110,6 +115,7 @@ class CursoAnuncioRepository
             $anuncioId,
             $titulo,
             $contenido,
+            $enlaceUrl,
             $tipo,
             $editadoPor
         ) {
@@ -121,6 +127,7 @@ class CursoAnuncioRepository
                 ->update([
                     'titulo'         => $titulo,
                     'contenido'      => $contenido,
+                    'enlace_url'     => $enlaceUrl,
                     'tipo'           => $tipo,
                     'editado_por'    => $editadoPor,
                     'editado_en'     => DB::raw('NOW()'),

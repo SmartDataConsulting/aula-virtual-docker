@@ -68,17 +68,23 @@ class CursoAnuncioService
         int $entidadId,
         string $titulo,
         string $contenido,
+        ?string $enlaceUrl,
         string $tipo,
         int $creadoPor
     ): int {
-        return $this->repo->insertar(
+        $id = $this->repo->insertar(
             $entidadTipo,
             $entidadId,
             $titulo,
             $contenido,
+            $enlaceUrl,
             $tipo,
             $creadoPor
         );
+
+        $this->invalidarCacheEntidad($entidadTipo, $entidadId);
+
+        return $id;
     }
 
     /**
@@ -88,6 +94,7 @@ class CursoAnuncioService
     int $anuncioId,
     string $titulo,
     string $contenido,
+    ?string $enlaceUrl,
     string $tipo,
     int $editadoPor
 ): void {
@@ -102,6 +109,7 @@ class CursoAnuncioService
         $anuncioId,
         $titulo,
         $contenido,
+        $enlaceUrl,
         $tipo,
         $editadoPor
     );

@@ -174,14 +174,27 @@ class SesionService
             'video_chat_titulo' => $data['video_chat_titulo'] ?? null,
             'video_chat_filesize' => $data['video_chat_filesize'] ?? null,
             'video_chat_uploaded_at' => $data['video_chat_uploaded_at'] ?? null,
-            'materials_count' => (int) ($data['materiales_count'] ?? $data['materials_count'] ?? 0),
-            'announcements_count' => (int) ($data['anuncios_count'] ?? $data['announcements_count'] ?? 0),
+            'materials_count' => (int) ($data['materiales_count'] ?? $data['materials_count'] ?? count($data['materiales'] ?? $data['materials'] ?? [])),
+            'announcements_count' => (int) ($data['anuncios_count'] ?? $data['announcements_count'] ?? count($data['anuncios'] ?? $data['announcements'] ?? [])),
             'survey_id' => $data['encuesta_id'] ?? null,
             'survey_answered' => (bool) ($data['encuesta_respondida'] ?? false),
             'surveys' => collect($data['surveys'] ?? [])->map(fn ($survey) => (object) $survey),
             'evaluaciones' => $this->normalizeEvaluations($data['evaluaciones'] ?? []),
             'tiene_evaluacion' => (bool) ($data['tiene_evaluacion'] ?? false),
             'meeting' => $this->normalizeMeeting($data['meeting'] ?? null),
+            'materials' => collect($data['materiales'] ?? $data['materials'] ?? [])->map(fn ($material) => (object) $material),
+            'announcements' => collect($data['anuncios'] ?? $data['announcements'] ?? [])->map(function ($announcement) {
+                $announcement = is_array($announcement) ? $announcement : (array) $announcement;
+                return (object) [
+                    'id' => (int) ($announcement['id'] ?? 0),
+                    'title' => (string) ($announcement['titulo'] ?? $announcement['title'] ?? ''),
+                    'content' => (string) ($announcement['contenido'] ?? $announcement['content'] ?? ''),
+                    'url' => $announcement['enlace_url'] ?? $announcement['url'] ?? null,
+                    'type' => (string) ($announcement['tipo'] ?? $announcement['type'] ?? 'general'),
+                    'created_at' => $announcement['creado_en'] ?? $announcement['created_at'] ?? null,
+                    'updated_at' => $announcement['actualizado_en'] ?? $announcement['updated_at'] ?? null,
+                ];
+            }),
         ];
 
         if (in_array(strtolower($rol), ['admin', 'operador', 'docente', 'profesor'], true)) {
