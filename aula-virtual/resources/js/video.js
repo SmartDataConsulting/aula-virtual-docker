@@ -875,6 +875,13 @@ async function waitForVideoReady(expectedFileId = null) {
 }
 
 function renderVideoPlayer(container, fileId, chat = null) {
+    const canWriteVideo = container.dataset.canWriteVideo === '1';
+    const deleteChatHtml = canWriteVideo
+        ? `<button type="button" class="btn-danger" data-delete-video-chat data-session-id="${container.dataset.sessionId}">Eliminar chat</button>`
+        : '';
+    const deleteVideoHtml = canWriteVideo
+        ? `<button id="deleteVideoBtn" data-session-id="${container.dataset.sessionId}" class="btn-danger btn-danger-strong">🗑 Eliminar video</button>`
+        : '';
     const chatHtml = chat?.file_id
         ? `
             <div class="video-ready-card mt-4">
@@ -886,11 +893,11 @@ function renderVideoPlayer(container, fileId, chat = null) {
                 <div class="session-panel-actions">
                     <button type="button" class="btn-secondary" data-preview-video-chat data-session-id="${container.dataset.sessionId}">Ver chat</button>
                     <a class="btn-secondary" href="/courses/sessions/${container.dataset.sessionId}/video/chat/download">Descargar TXT</a>
-                    <button type="button" class="btn-danger" data-delete-video-chat data-session-id="${container.dataset.sessionId}">Eliminar chat</button>
+                    ${deleteChatHtml}
                 </div>
             </div>
         `
-        : `
+        : canWriteVideo ? `
             <div class="session-info-panel mt-4">
                 <div class="session-panel-subtitle mb-2">No se adjunto chat de Zoom para esta grabacion.</div>
                 <div class="session-panel-actions justify-start">
@@ -900,7 +907,7 @@ function renderVideoPlayer(container, fileId, chat = null) {
                 <input type="file" id="videoChatInput" accept=".txt,text/plain" class="hidden">
                 <div id="videoChatMeta" class="video-file-meta hidden mt-3" aria-live="polite"></div>
             </div>
-        `;
+        ` : '';
 
     const html = `
         <div class="card card-colored p-5 mb-6 space-y-4">
@@ -910,12 +917,7 @@ function renderVideoPlayer(container, fileId, chat = null) {
                     Video de la sesión
                 </div>
 
-                <button
-                    id="deleteVideoBtn"
-                    data-session-id="${container.dataset.sessionId}"
-                    class="btn-danger btn-danger-strong">
-                    🗑 Eliminar video
-                </button>
+                ${deleteVideoHtml}
             </div>
 
               <div class="flex flex-col sm:flex-row items-center justify-between

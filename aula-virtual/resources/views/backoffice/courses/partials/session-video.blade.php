@@ -11,6 +11,7 @@
 </div>
 @elseif(($session->video_status ?? null) === 'ready' && !empty($session->video_drive_file_id))
 <div id="videoUploadContainer"
+     data-can-write-video="{{ $canWriteVideo ? '1' : '0' }}"
      data-course-id="{{ $course->id }}"
      data-session-id="{{ $session->id }}"
      data-video-status="{{ $session->video_status }}"
@@ -89,6 +90,7 @@
 @elseif(($session->video_status ?? null) === 'processing')
 <div class="session-panel">
     <div id="videoUploadContainer"
+         data-can-write-video="{{ $canWriteVideo ? '1' : '0' }}"
          data-course-id="{{ $course->id }}"
          data-session-id="{{ $session->id }}"
          data-video-status="{{ $session->video_status }}"
@@ -103,6 +105,7 @@
 @elseif($canWriteVideo)
 <div class="session-panel">
     <div id="videoUploadContainer"
+         data-can-write-video="{{ $canWriteVideo ? '1' : '0' }}"
          data-course-id="{{ $course->id }}"
          data-session-id="{{ $session->id }}"
          data-video-status="{{ $session->video_status ?? '' }}"

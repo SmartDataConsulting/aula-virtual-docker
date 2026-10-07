@@ -10,6 +10,17 @@ use PHPUnit\Framework\TestCase;
 
 class BackofficePermissionMatrixTest extends TestCase
 {
+    public function test_students_receive_only_material_read_permission(): void
+    {
+        foreach (['alumno', 'student'] as $role) {
+            self::assertSame('alumno', BackofficePermission::normalizeRole($role));
+            self::assertTrue(BackofficePermission::allows($role, 'materials.read'));
+            foreach (['materials.write', 'video.read', 'video.write', 'evaluations.read', 'evaluations.write', 'announcements.read', 'announcements.write', 'attendance.read', 'attendance.write', 'unknown'] as $permission) {
+                self::assertFalse(BackofficePermission::allows($role, $permission), "$role: $permission");
+            }
+        }
+    }
+
     public function test_teacher_can_read_but_cannot_mutate_video_evaluations_or_attendance(): void
     {
         foreach (['video.read', 'evaluations.read', 'attendance.read'] as $permission) {

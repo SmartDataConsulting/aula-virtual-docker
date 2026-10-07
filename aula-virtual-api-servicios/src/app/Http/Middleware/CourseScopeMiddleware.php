@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Helpers\DbSafe;
+use App\Repositories\EncuestaRespuestaRepository;
 use App\Support\BackofficePermission;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,7 +19,9 @@ final class CourseScopeMiddleware
         }
 
         $email = trim((string) $request->header('X-USER-EMAIL'));
-        if ($role !== 'docente') {
+        // materials.read also covers the session material list, not just downloads.
+        $studentMaterials = $role === 'alumno' && in_array($resource, ['material', 'session'], true);
+        if ($role !== 'docente' && !$studentMaterials) {
             return $next($request);
         }
 
@@ -28,7 +31,14 @@ final class CourseScopeMiddleware
 
         try {
             $courseId = $this->resolveCourseId($request, $resource);
-            if ($courseId === null || !$this->teacherAssigned($courseId, $email)) {
+            if ($courseId === null) {
+                return $this->denied();
+            }
+
+            $authorized = $studentMaterials
+                ? app(EncuestaRespuestaRepository::class)->alumnoInscritoEnCurso($courseId, $email)
+                : $this->teacherAssigned($courseId, $email);
+            if (!$authorized) {
                 return $this->denied();
             }
         } catch (\Throwable $exception) {

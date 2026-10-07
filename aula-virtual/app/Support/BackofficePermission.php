@@ -31,11 +31,14 @@ final class BackofficePermission
         self::ATTENDANCE_READ,
     ];
 
+    private const STUDENT_PERMISSIONS = [self::MATERIALS_READ];
+
     public static function normalizeRole(?string $role): string
     {
         return match (strtolower(trim((string) $role))) {
             'administrador' => 'admin',
             'profesor' => 'docente',
+            'student' => 'alumno',
             default => strtolower(trim((string) $role)),
         };
     }
@@ -45,6 +48,7 @@ final class BackofficePermission
         return match (self::normalizeRole($role)) {
             'admin', 'operador' => in_array($permission, self::ADMIN_PERMISSIONS, true),
             'docente' => in_array($permission, self::TEACHER_PERMISSIONS, true),
+            'alumno' => in_array($permission, self::STUDENT_PERMISSIONS, true),
             default => false,
         };
     }

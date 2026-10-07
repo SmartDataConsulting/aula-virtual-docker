@@ -20,6 +20,8 @@ final class BackofficePermission
         'attendance.read',
     ];
 
+    private const STUDENT_PERMISSIONS = ['materials.read'];
+
     public static function normalizeRole(?string $role): string
     {
         $role = strtolower(trim((string) $role));
@@ -32,7 +34,7 @@ final class BackofficePermission
             return 'docente';
         }
 
-        return $role;
+        return $role === 'student' ? 'alumno' : $role;
     }
 
     public static function allows(?string $role, string $permission): bool
@@ -41,6 +43,10 @@ final class BackofficePermission
 
         if ($role === 'admin' || $role === 'operador') {
             return in_array($permission, self::ADMIN_PERMISSIONS, true);
+        }
+
+        if ($role === 'alumno') {
+            return in_array($permission, self::STUDENT_PERMISSIONS, true);
         }
 
         return $role === 'docente' && in_array($permission, self::TEACHER_PERMISSIONS, true);
