@@ -7,11 +7,12 @@ use PHPUnit\Framework\TestCase;
 
 class BackofficePermissionTest extends TestCase
 {
-    public function test_students_receive_only_material_read_permission(): void
+    public function test_students_receive_only_material_and_video_content_read_permissions(): void
     {
         foreach (['alumno', 'student'] as $role) {
             self::assertSame('alumno', BackofficePermission::normalizeRole($role));
             self::assertTrue(BackofficePermission::allows($role, 'materials.read'));
+            self::assertTrue(BackofficePermission::allows($role, 'video.content.read'));
             foreach (['materials.write', 'video.read', 'video.write', 'evaluations.read', 'evaluations.write', 'announcements.read', 'announcements.write', 'attendance.read', 'attendance.write', 'unknown'] as $permission) {
                 self::assertFalse(BackofficePermission::allows($role, $permission), "$role: $permission");
             }

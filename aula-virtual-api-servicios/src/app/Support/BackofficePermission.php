@@ -5,7 +5,7 @@ namespace App\Support;
 final class BackofficePermission
 {
     private const ADMIN_PERMISSIONS = [
-        'video.read', 'video.write',
+        'video.read', 'video.content.read', 'video.write',
         'materials.read', 'materials.write',
         'evaluations.read', 'evaluations.write',
         'announcements.read', 'announcements.write',
@@ -13,14 +13,14 @@ final class BackofficePermission
     ];
 
     private const TEACHER_PERMISSIONS = [
-        'video.read',
+        'video.read', 'video.content.read',
         'materials.read', 'materials.write',
         'evaluations.read',
         'announcements.read', 'announcements.write',
         'attendance.read',
     ];
 
-    private const STUDENT_PERMISSIONS = ['materials.read'];
+    private const STUDENT_PERMISSIONS = ['materials.read', 'video.content.read'];
 
     public static function normalizeRole(?string $role): string
     {

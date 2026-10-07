@@ -297,6 +297,31 @@ class SesionVideoService
         ];
     }
 
+    public function getVideoContent(int $sesionId): array
+    {
+        // Repository metadata read: unlike status reconciliation, never writes to DB/Drive.
+        $current = $this->uploadRepo->getVideoStatus($sesionId);
+        $status = $current['status'] ?? 'none';
+        $fileId = trim((string) ($current['file_id'] ?? ''));
+        if ($fileId !== '' && in_array($status, ['processing', 'uploaded', 'completed'], true)) {
+            try {
+                // Readers can observe readiness without invoking management/write endpoints.
+                $driveStatus = $this->driveHelper->getVideoStatus($fileId);
+                $status = $driveStatus['status'] ?? $status;
+            } catch (\Throwable $exception) {
+                // A recording status outage must not block an available class chat.
+                Log::warning('video_content_readiness_unavailable', ['session_id' => $sesionId, 'exception' => $exception::class]);
+            }
+        }
+        return [
+            'status' => $status,
+            'file_id' => $status === 'ready' ? ($current['file_id'] ?? null) : null,
+            'chat' => is_array($current['chat'] ?? null)
+                ? array_intersect_key($current['chat'], array_flip(['file_id', 'title', 'filesize', 'uploaded_at']))
+                : null,
+        ];
+    }
+
     public function getVideoStatus(int $sesionId): array
     {
         $current = $this->uploadRepo->getVideoStatus($sesionId);

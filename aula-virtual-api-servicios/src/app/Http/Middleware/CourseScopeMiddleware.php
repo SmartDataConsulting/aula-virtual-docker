@@ -19,9 +19,9 @@ final class CourseScopeMiddleware
         }
 
         $email = trim((string) $request->header('X-USER-EMAIL'));
-        // materials.read also covers the session material list, not just downloads.
-        $studentMaterials = $role === 'alumno' && in_array($resource, ['material', 'session'], true);
-        if ($role !== 'docente' && !$studentMaterials) {
+        // Student material and video content reads require canonical enrollment.
+        $studentResource = $role === 'alumno' && in_array($resource, ['material', 'session', 'course'], true);
+        if ($role !== 'docente' && !$studentResource) {
             return $next($request);
         }
 
@@ -35,7 +35,7 @@ final class CourseScopeMiddleware
                 return $this->denied();
             }
 
-            $authorized = $studentMaterials
+            $authorized = $studentResource
                 ? app(EncuestaRespuestaRepository::class)->alumnoInscritoEnCurso($courseId, $email)
                 : $this->teacherAssigned($courseId, $email);
             if (!$authorized) {

@@ -54,12 +54,17 @@
         Route::get(
             'courses/sessions/{session}/video/chat/preview',
             [SesionVideoController::class, 'previewChat']
-        )->name('sessions.video.chat.preview');
+        )->middleware('permission:video.content.read')->name('sessions.video.chat.preview');
 
         Route::get(
             'courses/sessions/{session}/video/chat/download',
             [SesionVideoController::class, 'downloadChat']
-        )->name('sessions.video.chat.download');
+        )->middleware('permission:video.content.read')->name('sessions.video.chat.download');
+
+        Route::get(
+            'courses/sessions/{session}/video/content',
+            [SesionVideoController::class, 'content']
+        )->middleware('permission:video.content.read')->name('sessions.video.content');
 
         /*
         |--------------------------------------------------------------------------

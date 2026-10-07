@@ -760,7 +760,10 @@ async function waitForVideoReady(expectedFileId = null) {
 
     const statusEl = document.getElementById('videoStatus');
 
-    const url = `/backoffice/courses/${courseId}/sessions/${sessionId}/video/status`;
+    const url = container.dataset.canWriteVideo === '1'
+        ? `/backoffice/courses/${courseId}/sessions/${sessionId}/video/status`
+        : container.dataset.videoContentUrl;
+    if (!url) return;
     const POLL_INTERVAL_MS = 10000;
     const RETRY_BASE_DELAY_MS = 5000;
     const RETRY_MAX_DELAY_MS = 30000;
@@ -876,95 +879,53 @@ async function waitForVideoReady(expectedFileId = null) {
 
 function renderVideoPlayer(container, fileId, chat = null) {
     const canWriteVideo = container.dataset.canWriteVideo === '1';
-    const deleteChatHtml = canWriteVideo
-        ? `<button type="button" class="btn-danger" data-delete-video-chat data-session-id="${container.dataset.sessionId}">Eliminar chat</button>`
+    const sessionId = escapeHtml(container.dataset.sessionId);
+    const deleteChatHtml = canWriteVideo && chat?.file_id
+        ? `<button type="button" class="btn-danger" data-delete-video-chat data-session-id="${sessionId}">Eliminar chat</button>`
         : '';
     const deleteVideoHtml = canWriteVideo
-        ? `<button id="deleteVideoBtn" data-session-id="${container.dataset.sessionId}" class="btn-danger btn-danger-strong">🗑 Eliminar video</button>`
+        ? `<button type="button" id="deleteVideoBtn" data-session-id="${sessionId}" class="btn-danger">Eliminar video</button>`
         : '';
     const chatHtml = chat?.file_id
-        ? `
-            <div class="video-ready-card mt-4">
-                <span class="video-ready-media-icon video-ready-media-icon--txt" aria-hidden="true">TXT</span>
-                <div class="video-ready-body">
-                    <div class="video-ready-title">Chat de Zoom adjunto</div>
-                    <div class="video-ready-copy">${escapeHtml(chat.title || 'chat-de-zoom.txt')}</div>
-                </div>
-                <div class="session-panel-actions">
-                    <button type="button" class="btn-secondary" data-preview-video-chat data-session-id="${container.dataset.sessionId}">Ver chat</button>
-                    <a class="btn-secondary" href="/courses/sessions/${container.dataset.sessionId}/video/chat/download">Descargar TXT</a>
-                    ${deleteChatHtml}
-                </div>
-            </div>
-        `
-        : canWriteVideo ? `
-            <div class="session-info-panel mt-4">
-                <div class="session-panel-subtitle mb-2">No se adjunto chat de Zoom para esta grabacion.</div>
-                <div class="session-panel-actions justify-start">
-                    <label class="btn-secondary" for="videoChatInput">Agregar chat de Zoom</label>
-                    <button type="button" id="uploadVideoChatBtn" class="btn-primary hidden">Guardar chat</button>
-                </div>
+        ? `<article class="video-ready-card" data-video-resource="chat">
+            <span class="video-ready-media-icon video-ready-media-icon--txt" aria-hidden="true">TXT</span>
+            <div class="video-ready-body"><h4 class="video-ready-title">Chat de la clase</h4>
+                <p class="video-ready-copy">${escapeHtml(chat.title || 'chat-de-zoom.txt')}${chat.filesize ? ' · ' + (Number(chat.filesize) / 1024).toFixed(1) + ' KB' : ''}</p></div>
+            <div class="session-panel-actions">
+                <a class="btn-secondary" href="/courses/sessions/${sessionId}/video/chat/preview" data-preview-video-chat data-session-id="${sessionId}">Ver chat</a>
+                <a class="btn-secondary" href="/courses/sessions/${sessionId}/video/chat/download">Descargar TXT</a>
+            </div></article>`
+        : '<p class="video-consultation-note">El chat de la clase aún no está disponible.</p>';
+    const managementHtml = canWriteVideo
+        ? `<section class="video-section" data-video-management aria-label="Gestión del contenido">
+            <h3>Gestión del contenido</h3><p>Estos recursos están publicados para los usuarios autorizados.</p>
+            ${chat?.file_id ? '' : `<div class="session-panel-actions">
+                <label class="btn-secondary" for="videoChatInput">Agregar chat de Zoom</label>
+                <button type="button" id="uploadVideoChatBtn" class="btn-primary hidden">Guardar chat</button></div>
                 <input type="file" id="videoChatInput" accept=".txt,text/plain" class="hidden">
-                <div id="videoChatMeta" class="video-file-meta hidden mt-3" aria-live="polite"></div>
-            </div>
-        ` : '';
-
-    const html = `
-        <div class="card card-colored p-5 mb-6 space-y-4">
-
-            <div class="flex justify-between items-center">
-                <div class="font-semibold">
-                    Video de la sesión
-                </div>
-
-                ${deleteVideoHtml}
-            </div>
-
-              <div class="flex flex-col sm:flex-row items-center justify-between
-                        gap-4
-                        rounded-xl border border-slate-200
-                        bg-slate-50
-                        px-5 py-4
-                        my-4 sm:my-5">
-
-                <div class="flex items-center gap-4">
-
-                    <div class="text-3xl">🎥</div>
-
-                    <div>
-                        <div class="text-sm font-semibold text-slate-800">
-                            Grabación de la sesión disponible
-                        </div>
-
-                        <div class="text-xs text-slate-500">
-                            El video se abrirá en Google Drive
-                        </div>
-                    </div>
-
-                </div>
-
-                <a href="https://drive.google.com/file/d/${fileId}/view"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="inline-flex items-center justify-center
-                          rounded-lg bg-blue-600
-                          px-5 py-2.5
-                          text-sm font-semibold text-white
-                          shadow-sm hover:bg-blue-700 transition">
-
-                    ▶ Ver grabación
-
-                </a>
-
-            </div>
-
-            ${chatHtml}
-
-        </div>
-    `;
-
-    container.innerHTML = html;
-
+                <div id="videoChatMeta" class="video-file-meta hidden" aria-live="polite"></div>`}
+            </section>
+            <section class="video-section video-maintenance" data-video-maintenance aria-label="Acciones de mantenimiento">
+                <h3>Acciones de mantenimiento</h3><p>Estas acciones eliminan recursos publicados y pueden afectar a alumnos y docentes.</p>
+                <div class="session-panel-actions">${deleteVideoHtml}${deleteChatHtml}</div>
+            </section>`
+        : (container.dataset.showVideoManagementNote === '1' ? '<p class="video-consultation-note">Los recursos de esta sesión son gestionados por administración.</p>' : '');
+    container.classList.add('video-content-panel');
+    container.dataset.videoStatus = 'ready';
+    container.innerHTML = `
+        <h2 class="session-panel-title">Video de la sesión</h2>
+        <p class="session-panel-subtitle">${canWriteVideo ? 'Prepara y consulta los recursos de esta sesión.' : 'Consulta los recursos publicados para esta sesión.'}</p>
+        <section class="video-section" aria-label="Estado del contenido"><h3>Estado del contenido</h3>
+            <dl class="video-status-grid"><div><dt>Grabación</dt><dd class="video-status is-available">Disponible</dd></div>
+                <div><dt>Chat de la clase</dt><dd class="video-status ${chat?.file_id ? 'is-available' : 'is-pending'}">${chat?.file_id ? 'Disponible' : 'No disponible'}</dd></div></dl>
+            <div id="videoStatus" class="video-status-message" role="status" aria-live="polite">La grabación está lista para consultar.</div>
+        </section>
+        <section class="video-section" data-video-resources aria-label="Recursos de la sesión"><h3>Recursos de la sesión</h3>
+            <article class="video-ready-card" data-video-resource="recording"><span class="video-ready-media-icon" aria-hidden="true">▶</span>
+                <div class="video-ready-body"><h4 class="video-ready-title">Grabación de la sesión disponible</h4><p class="video-ready-copy">Repasa el contenido cuando lo necesites.</p></div>
+                <a href="https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view" target="_blank" rel="noopener noreferrer" class="btn-primary">Ver grabación<span class="sr-only"> (se abre en otra pestaña)</span></a>
+            </article>${chatHtml}
+        </section>${managementHtml}`;
 }
 
 function initVideoPanel() {
@@ -976,6 +937,14 @@ function initVideoPanel() {
 
     const status = document.getElementById('videoStatus');
     const persistedStatus = container.dataset.videoStatus || '';
+
+    // Readers must not restore upload state or call management progress endpoints.
+    if (container.dataset.canWriteVideo !== '1') {
+        if (['processing', 'uploaded', 'completed'].includes(persistedStatus)) {
+            waitForVideoReady();
+        }
+        return;
+    }
 
     restoreUploadStateOnLoad().then((result) => {
         if (result.restored || result.failed) {
@@ -998,6 +967,7 @@ document.addEventListener('DOMContentLoaded', initVideoPanel);
 document.addEventListener('click', async function (e) {
     const previewChatBtn = e.target.closest('[data-preview-video-chat]');
     if (previewChatBtn) {
+        e.preventDefault();
         const container = document.getElementById('videoUploadContainer');
         const sessionId = previewChatBtn.dataset.sessionId || container?.dataset.sessionId;
 

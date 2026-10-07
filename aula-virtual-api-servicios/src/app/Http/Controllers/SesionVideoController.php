@@ -338,6 +338,20 @@ class SesionVideoController extends Controller
         }
     }
 
+    public function content($sesionId)
+    {
+        if ((int) $sesionId <= 0) {
+            return response()->json(['error' => 'Sesión inválida'], 400);
+        }
+
+        try {
+            return response()->json($this->service->getVideoContent((int) $sesionId));
+        } catch (\Throwable $exception) {
+            Log::warning('api_video_content_unavailable', ['session_id' => (int) $sesionId, 'exception' => $exception::class]);
+            return response()->json(['error' => 'Contenido no disponible'], 500);
+        }
+    }
+
     public function status($sesionId)
 {
     $sesionId = (int) $sesionId;

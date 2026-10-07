@@ -234,12 +234,25 @@ class SesionVideoController extends Controller
         }
     }
 
-    public function previewChat($sessionId)
+    public function content($sessionId)
+    {
+        return $this->jsonFromService($this->service->getVideoContent((int) $sessionId));
+    }
+
+    public function previewChat(Request $request, $sessionId)
     {
         try {
-            return $this->jsonFromService(
-                $this->service->getChatTranscript((int) $sessionId)
-            );
+            $result = $this->service->getChatTranscript((int) $sessionId);
+            if (!$result->ok() || $request->wantsJson()) {
+                return $this->jsonFromService($result);
+            }
+
+            // Native link fallback: chat remains readable even without the JS bundle.
+            return response($result->data()['content'] ?? '', 200, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, no-store',
+            ]);
         } catch (\Throwable $e) {
             Log::error('VIDEO_CHAT_PREVIEW_ERROR', [
                 'session_id' => $sessionId,

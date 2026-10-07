@@ -357,12 +357,12 @@ $router->get(
 |--------------------------------------------------------------------------
 */
 
-$router->get('/curso/{cursoId}/sesiones', 'SesionController@listarPorCurso');
+$router->get('/curso/{cursoId}/sesiones', ['middleware' => 'course.scope:course', 'uses' => 'SesionController@listarPorCurso']);
 
 $router->get(
     '/alumno/cursos/{cursoId}/sesiones/light',
     [
-        'middleware' => 'role:alumno',
+        'middleware' => ['role:alumno', 'course.scope:course'],
         'uses' => 'SesionController@listarPorCursoAlumnoLight'
     ]
 );
@@ -370,7 +370,7 @@ $router->get(
 $router->get(
     '/alumno/cursos/{cursoId}/sesiones/{sesionId}/detalle',
     [
-        'middleware' => 'role:alumno',
+        'middleware' => ['role:alumno', 'course.scope:session'],
         'uses' => 'SesionController@detalleAlumno'
     ]
 );
@@ -485,6 +485,12 @@ $router->get(
 $router->get(
     '/sesiones/{sesionId}/video/status',
     ['middleware' => ['permission:video.read', 'course.scope:session'], 'uses' => 'SesionVideoController@status']
+);
+
+// Published recording/chat metadata only; no upload state or write capabilities.
+$router->get(
+    '/sesiones/{sesionId}/video/content',
+    ['middleware' => ['permission:video.content.read', 'course.scope:session'], 'uses' => 'SesionVideoController@content']
 );
 
 /*

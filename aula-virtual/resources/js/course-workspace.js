@@ -19,7 +19,8 @@ if (root) {
     const noResults = root.querySelector('[data-session-no-results]');
     const workspaceCache = new Map();
     const panelCache = new Map();
-    const browserCachePrefix = `course-workspace:v2:${root.dataset.workspaceContext || 'default'}:${root.dataset.courseId}:`;
+    // Cached HTML includes permissions: never reuse it across users/roles or old UI releases.
+    const browserCachePrefix = `course-workspace:v3:${root.dataset.workspaceViewer || 'anonymous'}:${root.dataset.workspaceContext || 'default'}:${root.dataset.courseId}:`;
     let activeFilter = 'all';
     let workspaceController = null;
     let panelController = null;

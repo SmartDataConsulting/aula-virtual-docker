@@ -409,9 +409,14 @@ class VideoService
         ], 200);
     }
 
+    public function getVideoContent(int $sessionId): ServiceResult
+    {
+        return $this->api->getVideoContent($sessionId);
+    }
+
     public function getChatTranscript(int $sessionId): ServiceResult
     {
-        $status = $this->api->getVideoStatus($sessionId);
+        $status = $this->api->getVideoContent($sessionId);
         if (!$status->ok()) {
             return $status;
         }

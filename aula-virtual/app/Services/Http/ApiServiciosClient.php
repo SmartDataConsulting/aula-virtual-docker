@@ -1619,6 +1619,21 @@
             );
         }
 
+        public function getVideoContent(int $sessionId): ServiceResult
+        {
+            if ($fail = $this->validateConfig()) {
+                return $fail;
+            }
+
+            $endpoint = "/v1/sesiones/{$sessionId}/video/content";
+            return $this->execute(
+                $endpoint,
+                fn () => $this->client()->get($this->buildUrl($endpoint)),
+                ['session_id' => $sessionId],
+                [200]
+            );
+        }
+
         public function getVideoStatus(int $sessionId): ServiceResult
         {
             if ($fail = $this->validateConfig()) {
