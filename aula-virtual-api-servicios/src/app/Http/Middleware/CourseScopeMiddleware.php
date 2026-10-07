@@ -13,7 +13,10 @@ final class CourseScopeMiddleware
 {
     public function handle(Request $request, Closure $next, string $resource = 'course')
     {
-        $role = BackofficePermission::normalizeRole($request->header('X-USER-ROL'));
+        $role = \App\Support\AulaIdentity::role($request);
+        if ($role === null) {
+            return $this->denied();
+        }
         if (in_array($role, ['admin', 'operador'], true)) {
             return $next($request);
         }
@@ -52,7 +55,7 @@ final class CourseScopeMiddleware
     private function resolveCourseId(Request $request, string $resource): ?int
     {
         if ($resource === 'course') {
-            return $this->positiveInt($this->routeValue($request, ['courseId', 'cursoId', 'course']));
+            return $this->positiveInt($this->routeValue($request, ['courseId', 'cursoId', 'course', 'id', 'cursoEdicionId']));
         }
 
         if ($resource === 'session') {
@@ -71,6 +74,22 @@ final class CourseScopeMiddleware
         if ($resource === 'evaluation') {
             $evaluationId = $this->positiveInt($this->routeValue($request, ['evaluacionId', 'evaluationId']));
             return $evaluationId ? $this->scalar('SELECT curso_id FROM evaluacion WHERE id = ? LIMIT 1', [$evaluationId]) : null;
+        }
+
+        if ($resource === 'evaluation-file') {
+            $fileId = $this->positiveInt($this->routeValue($request, ['archivoId']));
+            return $fileId ? $this->scalar(
+                'SELECT ev.curso_id FROM evaluacion_rendicion_trabajo a JOIN evaluacion_rendicion r ON r.id = a.rendicion_id JOIN evaluacion ev ON ev.id = r.evaluacion_id WHERE a.archivo_id = ? AND a.activo = 1 LIMIT 1',
+                [$fileId]
+            ) : null;
+        }
+
+        if ($resource === 'evaluation-evidence') {
+            $path = ltrim(trim((string) $request->query('path', '')), '/');
+            return $path !== '' ? $this->scalar(
+                'SELECT ev.curso_id FROM evaluacion_subsanacion s JOIN evaluacion ev ON ev.id = s.evaluacion_id WHERE s.evidencia_archivo = ? LIMIT 1',
+                [$path]
+            ) : null;
         }
 
         if ($resource === 'announcement') {

@@ -183,12 +183,12 @@
             Route::post(
                 'qualifications/{courseId}/notes/subsanation',
                 [QualificationsController::class, 'saveSubsanation']
-            )->name('qualifications.notes.subsanation.save');
+            )->middleware('permission:evaluations.write')->name('qualifications.notes.subsanation.save');
 
             Route::put(
                 'qualifications/{courseId}/notes/subsanation',
                 [QualificationsController::class, 'updateSubsanation']
-            )->name('qualifications.notes.subsanation.update');
+            )->middleware('permission:evaluations.write')->name('qualifications.notes.subsanation.update');
 
             Route::get(
                 'qualifications/{courseId}/notes/subsanation/evidence',
@@ -203,7 +203,7 @@
             Route::post(
                 'qualifications/{courseId}/{evaluationId}/deliveries/{deliveryId}/review',
                 [QualificationsController::class, 'saveReview']
-            )->name('qualifications.review.save');
+            )->middleware('permission:evaluations.write')->name('qualifications.review.save');
 
             Route::get(
                 'qualifications/{courseId}/{evaluationId}/attachments/{attachmentId}/download',

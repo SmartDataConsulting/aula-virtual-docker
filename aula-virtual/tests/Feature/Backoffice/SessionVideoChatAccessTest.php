@@ -28,6 +28,7 @@ class SessionVideoChatAccessTest extends TestCase
             AuthSessionKeys::USER_EMAIL => 'reader@example.invalid',
             AuthSessionKeys::USER_NAME => 'Test Reader',
             AuthSessionKeys::USER_ROLE => $role,
+            AuthSessionKeys::AULA_ROLE => $role,
         ];
     }
 

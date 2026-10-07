@@ -146,6 +146,7 @@ class WpAuthBypassSecurityTest extends TestCase
                 'nombre' => 'Admin Seguro',
                 'email' => 'admin@test.com',
                 'role_id' => 1,
+                'aula_role' => 'admin',
             ], 200),
         ]);
 

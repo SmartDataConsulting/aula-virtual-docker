@@ -24,7 +24,7 @@ class SessionsController extends Controller
     int $sessionId
     ){
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
         if (!$correo) {
             return response()->json(['error' => 'unauthorized'], 401);
@@ -54,7 +54,7 @@ class SessionsController extends Controller
         int $sessionId
     ){
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
         if (!$correo) {
             return response()->json(['error' => 'unauthorized'], 401);
@@ -111,7 +111,7 @@ class SessionsController extends Controller
         int $evaluationId
     ){
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
         if (!$correo) {
             return response()->json(['error' => 'unauthorized'], 401);
@@ -173,7 +173,7 @@ class SessionsController extends Controller
     private function forgetCourseSessionCache(Request $request): void
     {
         $courseId = (int) $request->input('course_id', 0);
-        $role = (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '');
+        $role = (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '');
 
         if ($courseId > 0 && $role !== '') {
             $this->sesionService->forgetCourseSessions($courseId, $role);
@@ -183,7 +183,7 @@ class SessionsController extends Controller
     public function applyEvaluationPlanTemplate(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = (string) $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = (string) $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
         if (!$correo) {
             return response()->json(['ok' => false, 'error' => 'unauthorized'], 401);

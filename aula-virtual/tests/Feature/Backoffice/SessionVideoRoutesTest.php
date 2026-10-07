@@ -12,6 +12,15 @@ use Tests\TestCase;
 
 class SessionVideoRoutesTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['services.api_servicios.base_url' => 'https://api.example.invalid', 'services.api_servicios.token' => 'synthetic-test-token']);
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        \Illuminate\Support\Facades\Http::fake(['https://api.example.invalid/v1/aula/identity' =>
+            \Illuminate\Support\Facades\Http::response(['aula_role' => 'admin'])]);
+    }
+
     public function test_start_upload_delegates_to_video_service(): void
     {
         $this->mock(VideoService::class, function (MockInterface $mock) {
@@ -279,6 +288,7 @@ class SessionVideoRoutesTest extends TestCase
             AuthSessionKeys::USER_NAME => 'Usuario Test',
             AuthSessionKeys::JWT_TOKEN => null,
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ];
     }
 }

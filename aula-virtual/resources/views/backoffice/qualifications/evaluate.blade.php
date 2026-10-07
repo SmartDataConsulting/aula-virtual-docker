@@ -54,7 +54,8 @@
       ? ($review['totals']['max_score'] ?? $selectedParticipant['max_score'] ?? $criteria->sum('max_score'))
       : $criteria->sum('max_score');
 
-  $canGrade = $hasSelection && $rubricCriteria->isNotEmpty();
+  $canWriteEvaluations = \App\Support\BackofficePermission::allows(\App\Support\AulaProfile::role(), \App\Support\BackofficePermission::EVALUATIONS_WRITE);
+  $canGrade = $hasSelection && $rubricCriteria->isNotEmpty() && $canWriteEvaluations;
   $nextDeliveryId = (int) ($nextParticipant['delivery_id'] ?? 0);
   $hasNextDelivery = $nextDeliveryId > 0 && $nextDeliveryId !== $selectedDeliveryId;
 
@@ -508,6 +509,7 @@
             data-no-global-loader
             action="{{ route('backoffice.qualifications.review.save', [$courseId, $evaluationId, $selectedDeliveryId]) }}">
         @csrf
+        <fieldset @disabled(!$canWriteEvaluations)>
         <input type="hidden" name="next_delivery_id" value="{{ $nextDeliveryId }}">
 
         <section class="qualification-review-panel qualification-review-panel--rubric">
@@ -580,6 +582,7 @@
             <strong data-review-total-score>{{ $formatScore($totalScore) }}/{{ $formatScore($maxScore) }}</strong>
           </div>
         </section>
+        </fieldset>
       </form>
       @else
       <section class="qualification-review-panel qualification-review-panel--rubric">

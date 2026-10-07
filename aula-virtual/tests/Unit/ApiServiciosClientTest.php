@@ -68,6 +68,7 @@ class ApiServiciosClientTest extends TestCase
         session([
             \App\Support\AuthSessionKeys::USER_EMAIL => 'student@example.com',
             \App\Support\AuthSessionKeys::USER_ROLE => 'alumno',
+            \App\Support\AuthSessionKeys::AULA_ROLE => 'alumno',
         ]);
         Http::fake([
             'https://api.test/*' => Http::response(['ok' => true, 'survey' => ['link_id' => 99]], 200),
@@ -90,6 +91,7 @@ class ApiServiciosClientTest extends TestCase
         session([
             \App\Support\AuthSessionKeys::USER_EMAIL => 'admin@example.com',
             \App\Support\AuthSessionKeys::USER_ROLE => 'admin',
+            \App\Support\AuthSessionKeys::AULA_ROLE => 'admin',
         ]);
         Http::fake([
             'https://api.test/*' => Http::response(['ok' => true, 'summary' => []], 200),

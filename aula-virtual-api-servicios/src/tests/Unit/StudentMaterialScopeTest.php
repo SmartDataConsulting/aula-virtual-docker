@@ -25,7 +25,15 @@ class StudentMaterialScopeTest extends TestCase
         $db->statement('CREATE TABLE curso_edicion (id INTEGER, curso TEXT, edicion TEXT, docente_id_colaborador INTEGER, docente2_id_colaborador INTEGER)');
         $db->statement('CREATE TABLE Ficha_inscripcion (curso TEXT, grupo TEXT, CORREO_PERSONAL TEXT, correo_corporativo TEXT)');
         $db->statement('CREATE TABLE curso_edicion_sesiones (id INTEGER, curso_edicion_id INTEGER, docente_id INTEGER)');
-        $db->statement('CREATE TABLE usuario (email TEXT, colaborador_id INTEGER)');
+        $db->statement("CREATE TABLE usuario (id INTEGER, email TEXT, colaborador_id INTEGER, rol TEXT DEFAULT 'docente', role_id INTEGER DEFAULT 3, activo INTEGER DEFAULT 1)");
+        $db->statement('CREATE TABLE colaborador (id_colaborador INTEGER, rol_maestro INTEGER, rol_id INTEGER)');
+        $db->statement('CREATE TABLE parametros (id_maestro INTEGER, id_valor INTEGER, flg_activo INTEGER)');
+        $db->table('parametros')->insert(['id_maestro' => 2, 'id_valor' => 4, 'flg_activo' => 1]);
+        $db->table('colaborador')->insert(['id_colaborador' => 99, 'rol_maestro' => 2, 'rol_id' => 4]);
+        $db->table('usuario')->insert([
+            ['email' => 'admin@example.invalid', 'rol' => 'admin', 'role_id' => 1, 'colaborador_id' => null],
+            ['email' => 'operador@example.invalid', 'rol' => 'operador', 'role_id' => 2, 'colaborador_id' => 99],
+        ]);
         $db->statement('CREATE TABLE curso_edicion_sesion_materiales (id INTEGER, curso_edicion_sesion_id INTEGER)');
         $db->table('curso_edicion')->insert([
             ['id' => 1, 'curso' => 'Course A', 'edicion' => 'Group 1'],
@@ -56,6 +64,9 @@ class StudentMaterialScopeTest extends TestCase
         $request = Request::create('/v1/materiales/'.$id.'/descargar', 'GET');
         $request->headers->set('X-USER-ROL', $role);
         $request->headers->set('X-USER-EMAIL', $email);
+        if (in_array($role, ['admin', 'administrador', 'operador'], true)) {
+            $request->headers->set('X-AULA-ACTOR-EMAIL', $role === 'operador' ? 'operador@example.invalid' : 'admin@example.invalid');
+        }
         $request->setRouteResolver(fn () => [true, [], ['id' => $id, 'sesionId' => $id, 'cursoId' => $id]]);
         $response = (new PermissionMiddleware())->handle($request,
             fn ($request) => (new CourseScopeMiddleware())->handle($request, fn () => response('', 204), $scope),
@@ -252,6 +263,9 @@ class StudentMaterialScopeTest extends TestCase
             foreach (['docente' => 403, 'admin' => 204] as $role => $expected) {
                 $request = Request::create('/v1/sesiones/10/video/'.$action, 'POST');
                 $request->headers->set('X-USER-ROL', $role);
+                if ($role === 'admin') {
+                    $request->headers->set('X-AULA-ACTOR-EMAIL', 'admin@example.invalid');
+                }
                 $called = false;
                 $response = (new PermissionMiddleware())->handle($request, function () use (&$called) {
                     $called = true;

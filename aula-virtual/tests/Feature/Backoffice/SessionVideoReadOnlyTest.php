@@ -18,6 +18,7 @@ class SessionVideoReadOnlyTest extends TestCase
             AuthSessionKeys::USER_NAME => 'Test User',
             AuthSessionKeys::JWT_TOKEN => null,
             AuthSessionKeys::USER_ROLE => $role,
+            AuthSessionKeys::AULA_ROLE => $role,
         ];
     }
 
@@ -240,6 +241,10 @@ class SessionVideoReadOnlyTest extends TestCase
 
     public function test_admin_delete_chat_reaches_service_without_real_drive_deletion(): void
     {
+        config(['services.api_servicios.base_url' => 'https://api.example.invalid', 'services.api_servicios.token' => 'synthetic-test-token']);
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        \Illuminate\Support\Facades\Http::fake(['https://api.example.invalid/v1/aula/identity' =>
+            \Illuminate\Support\Facades\Http::response(['aula_role' => 'admin'])]);
         $this->mock(VideoService::class, function ($mock) {
             $mock->shouldReceive('deleteChatTranscript')->once()->with(1528)
                 ->andReturn(ServiceResult::success(['status' => 'deleted']));

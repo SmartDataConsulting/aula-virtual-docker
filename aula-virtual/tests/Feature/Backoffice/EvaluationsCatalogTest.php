@@ -88,6 +88,7 @@ class EvaluationsCatalogTest extends TestCase
         $session->put([
             AuthSessionKeys::USER_EMAIL => 'admin@local',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ]);
         $request->setLaravelSession($session);
         $this->app->instance('request', $request);

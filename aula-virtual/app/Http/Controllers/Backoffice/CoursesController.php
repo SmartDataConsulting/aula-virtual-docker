@@ -56,7 +56,7 @@ public function index(Request $request)
         : 'activos';
 
     $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-    $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+    $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
     Log::debug('CoursesController@index START', [
         'correo' => $correo,
@@ -195,7 +195,7 @@ public function index(Request $request)
             return redirect()->route('login');
         }
 
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
         if (!$rol) abort(401);
 
         $course = (object)['id' => $cursoId];
@@ -208,6 +208,7 @@ public function index(Request $request)
         // ==========================
 
         $result = $this->sesionService->listarSesionesCurso($cursoId, $rol);
+        abort_if($result->status() === 403, 403);
 
         if (!$result->ok()) {
 
@@ -404,7 +405,7 @@ public function index(Request $request)
         $data = $result->data();
 
         if ($panel === 'attendance') {
-            $role = strtolower((string) $request->session()->get(AuthSessionKeys::USER_ROLE, ''));
+            $role = strtolower((string) $request->session()->get(AuthSessionKeys::AULA_ROLE, ''));
             $standalone = $request->boolean('standalone');
             $meta = array_merge(
                 ['count' => 0, 'present' => 0, 'absent' => 0, 'pending' => 0, 'unresolved' => 0],
@@ -526,7 +527,7 @@ public function index(Request $request)
 
         $this->sesionService->forgetCourseSessions(
             $cursoId,
-            (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '')
+            (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '')
         );
 
         return back()->with('success', 'Material agregado correctamente');
@@ -569,7 +570,7 @@ public function index(Request $request)
 
     $this->sesionService->forgetCourseSessions(
         $cursoId,
-        (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '')
+        (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '')
     );
 
     return redirect()
@@ -588,7 +589,7 @@ public function index(Request $request)
 
         $this->sesionService->forgetCourseSessions(
             $cursoId,
-            (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '')
+            (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '')
         );
 
         return back()->with('success','Material eliminado.');
@@ -774,8 +775,9 @@ public function storeAnnouncement(
     if ($validated['entidad_tipo'] === 'curso') {
         $validated['entidad_id'] = $cursoId;
     } else {
-        $role = (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '');
+        $role = (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '');
         $sessionsResult = $this->sesionService->listarSesionesCurso($cursoId, $role);
+        abort_if($sessionsResult->status() === 403, 403);
         $sessionIds = $sessionsResult->ok()
             ? collect($sessionsResult->data()['sessions'] ?? [])->pluck('id')->map(fn ($id) => (int) $id)
             : collect();
@@ -880,10 +882,11 @@ public function destroyAnnouncement(
         return redirect()->route('login');
     }
 
-    $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+    $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
     // 🔹 Traer sesiones
     $sessionsResult = $this->sesionService->listarSesionesCurso($course, $rol);
+    abort_if($sessionsResult->status() === 403, 403);
 
     $sessions = $sessionsResult->ok()
         ? collect($sessionsResult->data()['sessions'] ?? [])
@@ -923,10 +926,11 @@ public function destroyAnnouncement(
     ): array {
         abort_if(!(string) $request->session()->get(AuthSessionKeys::USER_EMAIL, ''), 401);
 
-        $role = (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '');
+        $role = (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '');
         abort_if($role === '', 401);
 
         $result = $this->sesionService->listarSesionesCurso($courseId, $role);
+        abort_if($result->status() === 403, 403);
         $error = null;
         $sessions = collect();
 
@@ -1068,7 +1072,7 @@ public function destroyAnnouncement(
 public function evaluaciones(Request $request)
 {
     $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-    $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+    $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
     $search = trim((string) $request->query('search', ''));
 
     Log::info('CoursesController@evaluaciones', [
@@ -1080,7 +1084,7 @@ public function evaluaciones(Request $request)
         return redirect()->route('login');
     }
 
-    if (!in_array($rol, ['admin', 'operador'])) {
+    if (!in_array($rol, ['admin', 'operador', 'docente'])) {
         abort(403);
     }
 

@@ -17,7 +17,13 @@ class SesionService
      */
     public function listarSesionesCurso(int $courseId, string $rol): ServiceResult
     {
-        $cacheKey = 'sessions:list:' . strtolower($rol) . ':' . $courseId;
+        $effective = \App\Support\AulaProfile::role();
+        $rol = $effective !== '' ? $effective : $rol;
+        if ($rol === 'docente') {
+            // A cached response must not bypass the API's current teacher-course authorization.
+            return $this->listarSesionesCursoFresh($courseId, $rol);
+        }
+        $cacheKey = $this->courseSessionsCacheKey($courseId, $rol);
 
         return PerformanceCache::remember($cacheKey, PerformanceCache::DETAIL_TTL, function () use ($courseId, $rol) {
             return $this->listarSesionesCursoFresh($courseId, $rol);
@@ -26,7 +32,13 @@ class SesionService
 
     public function forgetCourseSessions(int $courseId, string $rol): void
     {
-        PerformanceCache::forget('sessions:list:' . strtolower($rol) . ':' . $courseId);
+        PerformanceCache::forget($this->courseSessionsCacheKey($courseId, $rol));
+    }
+
+    private function courseSessionsCacheKey(int $courseId, string $role): string
+    {
+        $actor = strtolower(trim((string) session(\App\Support\AuthSessionKeys::USER_EMAIL, '')));
+        return 'aula:sessions:list:' . strtolower($role) . ':' . hash('sha256', $actor) . ':' . $courseId;
     }
 
     private function listarSesionesCursoFresh(int $courseId, string $rol): ServiceResult

@@ -82,6 +82,7 @@ class CourseWorkspaceDesignTest extends TestCase
         session([
             AuthSessionKeys::USER_EMAIL => 'admin@local.test',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ]);
         $sessions = collect([$this->makeSession(101, 1, true)]);
 
@@ -109,6 +110,7 @@ class CourseWorkspaceDesignTest extends TestCase
         session([
             AuthSessionKeys::USER_EMAIL => 'teacher@local.test',
             AuthSessionKeys::USER_ROLE => 'docente',
+            AuthSessionKeys::AULA_ROLE => 'docente',
         ]);
         $sessions = collect([$this->makeSession(101, 1, true)]);
 
@@ -144,6 +146,7 @@ class CourseWorkspaceDesignTest extends TestCase
             AuthSessionKeys::LOGGED_IN => true,
             AuthSessionKeys::USER_EMAIL => 'admin@local.test',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ])->getJson('/backoffice/courses/32/sessions/101/workspace');
 
         $response->assertOk()

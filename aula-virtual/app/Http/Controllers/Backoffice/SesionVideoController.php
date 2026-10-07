@@ -345,7 +345,7 @@ class SesionVideoController extends Controller
 
     private function forgetSessionCache(Request $request, int $courseId, bool $successful): void
     {
-        $role = (string) $request->session()->get(AuthSessionKeys::USER_ROLE, '');
+        $role = (string) $request->session()->get(AuthSessionKeys::AULA_ROLE, '');
 
         if ($successful && $courseId > 0 && $role !== '') {
             $this->sesionService->forgetCourseSessions($courseId, $role);

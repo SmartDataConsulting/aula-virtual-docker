@@ -96,6 +96,7 @@ $app->middleware([
 
 $app->routeMiddleware([
     'internal.auth' => App\Http\Middleware\InternalServiceAuth::class,
+    'aula.identity' => App\Http\Middleware\EnsureAulaIdentity::class,
     'role' => App\Http\Middleware\RoleMiddleware::class,
     'permission' => App\Http\Middleware\PermissionMiddleware::class,
     'course.scope' => App\Http\Middleware\CourseScopeMiddleware::class,

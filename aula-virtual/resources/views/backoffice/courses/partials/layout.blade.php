@@ -15,7 +15,7 @@
 
 <div class="course-detail-page"
      data-course-workspace-root
-     data-workspace-viewer="{{ hash('sha256', $role . '|' . (string) session(\App\Support\AuthSessionKeys::USER_EMAIL, '')) }}"
+     data-workspace-viewer="{{ hash('sha256', $role . '|' . \App\Support\AulaProfile::role() . '|' . (string) session(\App\Support\AuthSessionKeys::USER_EMAIL, '')) }}"
      data-course-id="{{ $course->id }}"
      data-session-id="{{ $session->id ?? '' }}"
      data-show-url-template="{{ route('backoffice.courses.show', [$course->id, '__SESSION__']) }}"

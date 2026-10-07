@@ -6,7 +6,7 @@ use App\Support\BackofficePermission;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\CourseScopeMiddleware;
 use Illuminate\Http\Request;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class BackofficePermissionMatrixTest extends TestCase
 {
@@ -73,6 +73,10 @@ class BackofficePermissionMatrixTest extends TestCase
 
         $adminRequest = Request::create('/v1/sesiones/1/video/upload-started', 'POST');
         $adminRequest->headers->set('X-USER-ROL', 'admin');
+        $adminRequest->headers->set('X-USER-EMAIL', 'admin@example.invalid');
+        $resolver = \Mockery::mock(\App\Services\AulaRoleResolver::class);
+        $resolver->shouldReceive('forEmail')->with('admin@example.invalid')->andReturn('admin');
+        app()->instance(\App\Services\AulaRoleResolver::class, $resolver);
         $allowed = $middleware->handle($adminRequest, fn () => response()->json(['ok' => true]), 'video.write');
         self::assertSame(200, $allowed->getStatusCode());
     }
@@ -82,6 +86,11 @@ class BackofficePermissionMatrixTest extends TestCase
         $middleware = new CourseScopeMiddleware();
         $admin = Request::create('/v1/cursos/10/evaluaciones', 'GET');
         $admin->headers->set('X-USER-ROL', 'administrador');
+        $admin->headers->set('X-USER-EMAIL', 'admin@example.invalid');
+        $resolver = \Mockery::mock(\App\Services\AulaRoleResolver::class);
+        $resolver->shouldReceive('forEmail')->with('admin@example.invalid')->andReturn('admin');
+        $resolver->shouldReceive('forEmail')->with('')->andReturn(null);
+        app()->instance(\App\Services\AulaRoleResolver::class, $resolver);
         $allowed = $middleware->handle($admin, fn () => response()->json(['ok' => true]), 'course');
         self::assertSame(200, $allowed->getStatusCode());
 

@@ -23,6 +23,29 @@ class PerformanceCacheRecoveryTest extends TestCase
         return PerformanceCache::NAMESPACE.$this->key;
     }
 
+    public function test_invalidation_uses_effective_profile_and_actor_without_clearing_another_profile(): void
+    {
+        session([\App\Support\AuthSessionKeys::USER_ROLE => 'operador',
+            \App\Support\AuthSessionKeys::AULA_ROLE => 'docente',
+            \App\Support\AuthSessionKeys::USER_EMAIL => 'teacher@example.invalid']);
+        foreach (['docente', 'operador'] as $role) {
+            $key = PerformanceCache::NAMESPACE.PerformanceCache::courseListKey('main', $role, 'teacher@example.invalid');
+            Cache::put($key, 'fixture', 60);
+            Cache::put($key.':stale', 'fixture', 60);
+        }
+        PerformanceCache::forgetCourseLists();
+        $teacherKey = PerformanceCache::NAMESPACE.PerformanceCache::courseListKey('main', 'docente', 'teacher@example.invalid');
+        $operatorKey = PerformanceCache::NAMESPACE.PerformanceCache::courseListKey('main', 'operador', 'teacher@example.invalid');
+        self::assertNull(Cache::get($teacherKey));
+        self::assertNull(Cache::get($teacherKey.':stale'));
+        self::assertSame('fixture', Cache::get($operatorKey));
+        self::assertSame('fixture', Cache::get($operatorKey.':stale'));
+        $allKey = PerformanceCache::NAMESPACE.PerformanceCache::courseListKey('main', 'docente', '');
+        Cache::put($allKey, 'fixture', 60);
+        PerformanceCache::forgetCourseLists(email: '');
+        self::assertNull(Cache::get($allKey));
+    }
+
     public function test_fresh_hit_does_not_call_backend(): void
     {
         $fresh = ServiceResult::success(['courses' => [1]]);

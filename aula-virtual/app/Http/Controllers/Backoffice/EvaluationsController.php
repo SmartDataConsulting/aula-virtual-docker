@@ -24,7 +24,7 @@ class EvaluationsController extends Controller
     public function index(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
         Log::info('EvaluationsController@index', [
             'course_id' => $courseId,
@@ -36,7 +36,7 @@ class EvaluationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!in_array($rol, ['admin', 'operador', 'docente'])) {
             abort(403);
         }
 
@@ -77,7 +77,7 @@ class EvaluationsController extends Controller
     public function store(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
         if (!$correo) {
             return redirect()->route('login');
@@ -261,7 +261,7 @@ class EvaluationsController extends Controller
         try {
 
             $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-            $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+            $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
             if (!$correo) {
                 return response()->json(['error' => 'unauthorized'], 401);
@@ -327,7 +327,7 @@ class EvaluationsController extends Controller
         try {
 
             $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-            $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+            $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
             if (!$correo) {
                 return response()->json(['error' => 'unauthorized'], 401);
@@ -394,7 +394,7 @@ class EvaluationsController extends Controller
         try {
 
             $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-            $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+            $rol = $request->session()->get(AuthSessionKeys::AULA_ROLE);
 
             if (!$correo) {
                 return response()->json([

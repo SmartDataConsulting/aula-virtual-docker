@@ -62,7 +62,14 @@
             }
 
             // HTTP header names are case-insensitive. Explicit empty values must win too.
+            if ($request && $request->hasSession()) {
+                $headers['X-AULA-ACTOR-EMAIL'] = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL, '');
+            }
             foreach ($headerOverrides as $name => $value) {
+                // The trusted Portal session alone supplies the actor; scope overrides remain valid.
+                if (strcasecmp($name, 'X-AULA-ACTOR-EMAIL') === 0) {
+                    continue;
+                }
                 foreach (array_keys($headers) as $existingName) {
                     if (strcasecmp($existingName, $name) === 0) {
                         unset($headers[$existingName]);
@@ -1632,6 +1639,16 @@
                 ['session_id' => $sessionId],
                 [200]
             );
+        }
+
+        public function getAulaIdentity(): ServiceResult
+        {
+            if ($fail = $this->validateConfig()) {
+                return $fail;
+            }
+            $endpoint = '/v1/aula/identity';
+            return $this->execute($endpoint,
+                fn () => $this->client()->get($this->buildUrl($endpoint)), [], [200]);
         }
 
         public function getVideoStatus(int $sessionId): ServiceResult

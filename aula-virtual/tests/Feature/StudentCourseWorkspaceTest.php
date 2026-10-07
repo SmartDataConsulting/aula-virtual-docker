@@ -20,6 +20,7 @@ class StudentCourseWorkspaceTest extends TestCase
         session([
             AuthSessionKeys::USER_EMAIL => 'student@local.test',
             AuthSessionKeys::USER_ROLE => 'alumno',
+            AuthSessionKeys::AULA_ROLE => 'alumno',
         ]);
 
         $session = $this->makeSession(2349, 1);

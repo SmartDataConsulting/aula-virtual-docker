@@ -1,7 +1,7 @@
 <div class="space-y-5">
     @php
         $canWriteEvaluations = \App\Support\BackofficePermission::allows(
-            session(\App\Support\AuthSessionKeys::USER_ROLE),
+            session(\App\Support\AuthSessionKeys::AULA_ROLE),
             \App\Support\BackofficePermission::EVALUATIONS_WRITE
         );
         $allSessions = collect($sessions ?? [])->values();

@@ -22,6 +22,7 @@ class EvaluationQualificationIdentityTest extends TestCase
         session([
             AuthSessionKeys::USER_EMAIL => 'admin@example.com',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ]);
     }
 

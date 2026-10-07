@@ -12,6 +12,8 @@ class Navigation
             case 'admin':
             case 'administrador':
             case 'operador':
+            case 'docente':
+            case 'profesor':
 
                 $menu = [
                     [

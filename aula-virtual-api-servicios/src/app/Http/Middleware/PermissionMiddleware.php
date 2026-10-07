@@ -10,7 +10,7 @@ final class PermissionMiddleware
 {
     public function handle(Request $request, Closure $next, string $permission)
     {
-        if (!BackofficePermission::allows($request->header('X-USER-ROL'), $permission)) {
+        if (!BackofficePermission::allows(\App\Support\AulaIdentity::role($request), $permission)) {
             return response()->json([
                 'ok' => false,
                 'message' => 'No autorizado',

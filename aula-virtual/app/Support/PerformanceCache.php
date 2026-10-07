@@ -137,7 +137,9 @@ class PerformanceCache
     public static function forgetCourseLists(?string $role = null, ?string $email = null): void
     {
         foreach (['main', 'evaluations', 'qualifications', 'surveys', 'certificates'] as $scope) {
-            self::forget(self::courseListKey($scope, $role ?: session(AuthSessionKeys::USER_ROLE), $email ?: session(AuthSessionKeys::USER_EMAIL)));
+            $effectiveRole = in_array($scope, ['surveys', 'certificates'], true)
+                ? session(AuthSessionKeys::USER_ROLE) : AulaProfile::role();
+            self::forget(self::courseListKey($scope, $role ?? $effectiveRole, $email ?? session(AuthSessionKeys::USER_EMAIL)));
         }
     }
 

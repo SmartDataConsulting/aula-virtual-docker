@@ -19,7 +19,7 @@ class CursoService
      */
     public function listarCursos(string $correo): ServiceResult
     {
-        $role = (string) session(AuthSessionKeys::USER_ROLE, 'guest');
+        $role = \App\Support\AulaProfile::role();
         $cacheKey = PerformanceCache::courseListKey('main', $role, $correo);
 
         return PerformanceCache::rememberFreshOrStaleOnError($cacheKey, PerformanceCache::COURSE_LIST_TTL, function () use ($correo, $role) {
@@ -628,7 +628,7 @@ class CursoService
  */
 public function listarCursosParaEvaluaciones(): ServiceResult
 {
-    $role = (string) session(AuthSessionKeys::USER_ROLE, 'guest');
+    $role = (string) session(AuthSessionKeys::AULA_ROLE, 'guest');
     $email = (string) session(AuthSessionKeys::USER_EMAIL, '');
     $cacheKey = PerformanceCache::courseListKey('evaluations', $role, $email);
 
@@ -677,7 +677,7 @@ private function listarCursosParaEvaluacionesFresh(): ServiceResult
 
 public function listarCursosParaCalificaciones(): ServiceResult
 {
-    $role = (string) session(AuthSessionKeys::USER_ROLE, 'guest');
+    $role = (string) session(AuthSessionKeys::AULA_ROLE, 'guest');
     $email = (string) session(AuthSessionKeys::USER_EMAIL, '');
     $cacheKey = PerformanceCache::courseListKey('qualifications', $role, $email);
 

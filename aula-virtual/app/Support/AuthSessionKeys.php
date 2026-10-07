@@ -13,6 +13,7 @@ class AuthSessionKeys
     public const USER_NAME = 'user_name';
     public const JWT_TOKEN = 'jwt_token';
     public const USER_ROLE = 'user_role';
+    public const AULA_ROLE = 'aula_role';
 
     public static function all(): array
     {
@@ -22,7 +23,8 @@ class AuthSessionKeys
             self::USER_EMAIL,
             self::USER_NAME,
             self::JWT_TOKEN,
-            self::USER_ROLE, 
+            self::USER_ROLE,
+            self::AULA_ROLE,
         ];
     }
 }

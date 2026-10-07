@@ -1,5 +1,5 @@
 @php
-    $canWriteVideo = \App\Support\BackofficePermission::allows(session(\App\Support\AuthSessionKeys::USER_ROLE), \App\Support\BackofficePermission::VIDEO_WRITE);
+    $canWriteVideo = \App\Support\BackofficePermission::allows(session(\App\Support\AuthSessionKeys::AULA_ROLE), \App\Support\BackofficePermission::VIDEO_WRITE);
     $videoReady = ($session->video_status ?? '') === 'ready' && !empty($session->video_drive_file_id);
     $videoBusy = in_array($session->video_status ?? '', ['processing', 'uploaded', 'completed', 'uploading', 'created'], true);
     $hasChat = !empty($session->video_chat_drive_file_id);

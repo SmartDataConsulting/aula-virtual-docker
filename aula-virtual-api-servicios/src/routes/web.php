@@ -21,6 +21,9 @@ $router->get('/Certificados/{token}', 'AlumnoController@descargarCertificadoPubl
 
 $router->group(['prefix' => 'v1', 'middleware' => 'internal.auth'], function () use ($router) {
 
+// Internal authorization preflight: Portal must verify identity before touching Drive.
+$router->get('/aula/identity', ['middleware' => 'aula.identity', 'uses' => 'UsuarioController@aulaIdentity']);
+
 $router->post('/cursos/{courseId}/sesiones/{sessionId}/zoom/join', 'AttendanceController@join');
 $router->get('/asistencias/cursos/resumen', [
     'middleware' => 'permission:attendance.read',
@@ -67,10 +70,10 @@ $router->post('/sesiones/{sessionId}/asistencias/sync', [
 
 // Cursos
 $router->get('/alumno/resumen', 'CursoController@resumenAlumno');
-$router->get('/backoffice/resumen', 'CursoController@resumenBackoffice');
-$router->get('/cursos', 'CursoController@listar');
-$router->get('/cursos/{id}', 'CursoController@obtener');
-$router->get('/cursos/{cursoEdicionId}/alumnos', 'CursoController@listarAlumnosCurso');
+$router->get('/backoffice/resumen', ['middleware' => 'aula.identity', 'uses' => 'CursoController@resumenBackoffice']);
+$router->get('/cursos', ['middleware' => 'aula.identity', 'uses' => 'CursoController@listar']);
+$router->get('/cursos/{id}', ['middleware' => 'course.scope:course', 'uses' => 'CursoController@obtener']);
+$router->get('/cursos/{cursoEdicionId}/alumnos', ['middleware' => 'course.scope:course', 'uses' => 'CursoController@listarAlumnosCurso']);
 
     /*
 |--------------------------------------------------------------------------
@@ -183,7 +186,7 @@ $router->put(
 $router->get(
     '/docente/subsanaciones/evidencia',
     [
-        'middleware' => 'permission:evaluations.read',
+        'middleware' => ['permission:evaluations.read', 'course.scope:evaluation-evidence'],
         'uses' => 'EvaluacionController@descargarEvidenciaSubsanacion'
     ]
 );
@@ -206,7 +209,7 @@ $router->post(
 
 $router->get(
     '/evaluaciones/curso/{cursoId}/tipo/{tipoId}',
-    'EvaluacionController@listarPublicadasPorCursoYTipo'
+    ['middleware' => 'course.scope:course', 'uses' => 'EvaluacionController@listarPublicadasPorCursoYTipo']
 );
 
 $router->get(
@@ -284,7 +287,7 @@ $router->get(
 $router->get(
 '/backoffice/evaluaciones/entregas/archivos/{archivoId}/descargar',
     [
-        'middleware' => 'permission:evaluations.read',
+        'middleware' => ['permission:evaluations.read', 'course.scope:evaluation-file'],
         'uses' => 'EvaluacionRendicionController@descargarArchivoEntregaBackoffice'
     ]
 );
@@ -292,7 +295,7 @@ $router->get(
 $router->post(
     '/evaluaciones/{evaluacionId}/evaluar',
     [
-        'middleware' => 'role:admin,operador,alumno',
+        'middleware' => ['aula.identity', 'role:admin,operador,alumno'],
         'uses' => 'EvaluacionController@evaluar'
     ]
 );

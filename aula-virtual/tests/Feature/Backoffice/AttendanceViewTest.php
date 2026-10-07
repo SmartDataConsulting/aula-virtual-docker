@@ -33,6 +33,7 @@ class AttendanceViewTest extends TestCase
         $response = $this->withSession([
             AuthSessionKeys::LOGGED_IN => true,
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
             AuthSessionKeys::USER_EMAIL => 'admin@local',
         ])->get('/backoffice/attendance');
 
@@ -58,6 +59,7 @@ class AttendanceViewTest extends TestCase
         $response = $this->withSession([
             AuthSessionKeys::LOGGED_IN => true,
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
             AuthSessionKeys::USER_EMAIL => 'admin@local',
         ])->get('/backoffice/attendance');
 

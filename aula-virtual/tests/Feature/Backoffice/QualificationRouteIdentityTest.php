@@ -9,6 +9,52 @@ use Tests\TestCase;
 
 class QualificationRouteIdentityTest extends TestCase
 {
+    public function test_review_controls_are_read_only_for_teacher_and_writable_for_admin_and_operator(): void
+    {
+        foreach (['docente' => false, 'operador' => true, 'admin' => true] as $profile => $canWrite) {
+            session([AuthSessionKeys::USER_ROLE => 'operador', AuthSessionKeys::AULA_ROLE => $profile,
+                AuthSessionKeys::USER_EMAIL => 'fixture@example.invalid']);
+            $html = view('backoffice.qualifications.evaluate', [
+                'courseId' => 34, 'evaluationId' => 6, 'evaluation' => ['nombre' => 'Fixture work'],
+                'criteria' => collect([['label' => 'Criterion', 'max_score' => 20]]),
+                'participants' => collect(), 'summary' => [], 'search' => '', 'error' => null, 'reviewError' => null,
+                'selectedDeliveryId' => 2, 'selectedParticipant' => ['name' => 'Fixture student', 'delivery_id' => 2],
+                'nextParticipant' => ['delivery_id' => 3], 'previousParticipant' => null,
+                'review' => ['rubric' => ['criteria' => [['id' => 1, 'name' => 'Criterion', 'max_score' => 20]]]],
+            ])->render();
+            if ($canWrite) {
+                self::assertStringContainsString('name="save_action"', $html);
+                self::assertStringContainsString('Guardar y siguiente', $html);
+                self::assertStringNotContainsString('<fieldset disabled', $html);
+            } else {
+                self::assertStringNotContainsString('name="save_action"', $html);
+                self::assertStringNotContainsString('Guardar y siguiente', $html);
+                self::assertStringContainsString('<fieldset disabled', $html);
+            }
+        }
+    }
+
+    public function test_administrative_operator_can_save_review_and_legacy_teacher_can_read(): void
+    {
+        config(['services.api_servicios.base_url' => 'https://api.test', 'services.api_servicios.token' => 'synthetic-test-token']);
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://api.test/v1/evaluaciones/6/entregas/2/revision' => Http::response([], 200),
+            'https://api.test/v1/calificaciones/cursos/34' => Http::response(['course' => ['id' => 34, 'name' => 'Fixture'], 'evaluations' => []]),
+        ]);
+        $this->withSession([
+            AuthSessionKeys::LOGGED_IN => true, AuthSessionKeys::USER_ID => 1,
+            AuthSessionKeys::USER_ROLE => 'operador', AuthSessionKeys::AULA_ROLE => 'operador',
+            AuthSessionKeys::USER_EMAIL => 'operator@example.invalid',
+        ])->postJson('/backoffice/qualifications/34/6/deliveries/2/review', [
+            'save_action' => 'stay', 'criteria' => [1 => ['level' => 5, 'comment' => 'Fixture']],
+        ])->assertOk()->assertJsonPath('ok', true);
+        $this->withSession([
+            AuthSessionKeys::LOGGED_IN => true, AuthSessionKeys::USER_ROLE => 'docente',
+            AuthSessionKeys::AULA_ROLE => 'docente', AuthSessionKeys::USER_EMAIL => 'legacy@example.invalid',
+        ])->get('/backoffice/qualifications/34')->assertOk();
+    }
+
     public function test_legacy_relation_id_redirects_to_real_evaluation_id_and_normalizes_delivery(): void
     {
         Cache::flush();
@@ -34,6 +80,7 @@ class QualificationRouteIdentityTest extends TestCase
             AuthSessionKeys::USER_ID => 1,
             AuthSessionKeys::USER_EMAIL => 'admin@example.com',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ])->get('/backoffice/qualifications/34/3?entregaId=2,');
 
         $response->assertRedirect('/backoffice/qualifications/34/6?entregaId=2');
@@ -55,6 +102,7 @@ class QualificationRouteIdentityTest extends TestCase
             AuthSessionKeys::USER_ID => 1,
             AuthSessionKeys::USER_EMAIL => 'admin@example.com',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ])->postJson('/backoffice/qualifications/34/6/deliveries/2/review', [
             'save_action' => 'next',
             'next_delivery_id' => 0,

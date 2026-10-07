@@ -24,6 +24,7 @@ class StudentMaterialRoutesTest extends TestCase
                     AuthSessionKeys::USER_EMAIL => 'student@example.invalid',
                     AuthSessionKeys::USER_NAME => 'Test Student',
                     AuthSessionKeys::USER_ROLE => $role,
+                    AuthSessionKeys::AULA_ROLE => $role,
                     AuthSessionKeys::JWT_TOKEN => null,
                 ])->get('/backoffice/materials/100/'.$action)->assertStatus(418);
             }

@@ -25,7 +25,7 @@ class QualificationsController extends Controller
     public function index(Request $request)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $search = trim((string) $request->query('search', ''));
 
         Log::info('QualificationsController@index', [
@@ -38,7 +38,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -110,7 +110,7 @@ class QualificationsController extends Controller
     public function show(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
 
         Log::info('QualificationsController@show', [
             'course_id' => $courseId,
@@ -122,7 +122,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -165,7 +165,7 @@ class QualificationsController extends Controller
     public function notes(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $userId = $request->session()->get(AuthSessionKeys::USER_ID);
 
         Log::info('QualificationsController@notes', [
@@ -179,7 +179,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -418,7 +418,7 @@ class QualificationsController extends Controller
     public function subsanation(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
             $userId = $request->session()->get(AuthSessionKeys::USER_ID);
         $evaluationId = (int) $request->query('evaluation_id', 0);
         $courseSessionEvaluationId = (int) $request->query('course_session_evaluation_id', 0);
@@ -428,7 +428,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -612,8 +612,9 @@ class QualificationsController extends Controller
 
     public function saveSubsanation(Request $request, int $courseId)
     {
+        abort_unless(\App\Support\BackofficePermission::allows(\App\Support\AulaProfile::role(), \App\Support\BackofficePermission::EVALUATIONS_WRITE), 403);
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $userId = $request->session()->get(AuthSessionKeys::USER_ID);
 
         if ($correo === '') {
@@ -627,7 +628,7 @@ class QualificationsController extends Controller
             ], 401);
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -759,15 +760,16 @@ class QualificationsController extends Controller
 
     public function updateSubsanation(Request $request, int $courseId)
     {
+        abort_unless(\App\Support\BackofficePermission::allows(\App\Support\AulaProfile::role(), \App\Support\BackofficePermission::EVALUATIONS_WRITE), 403);
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $userId = $request->session()->get(AuthSessionKeys::USER_ID);
 
         if ($correo === '') {
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -862,7 +864,7 @@ class QualificationsController extends Controller
     public function downloadSubsanationEvidence(Request $request, int $courseId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $path = trim((string) $request->query('path', ''));
         $filename = trim((string) $request->query('name', ''));
 
@@ -870,7 +872,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -915,7 +917,7 @@ class QualificationsController extends Controller
     public function evaluate(Request $request, int $courseId, int $evaluationId)
     {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $search = trim((string) $request->query('search', ''));
         $rawDeliveryId = $request->query('entregaId', $request->query('entrega', 0));
         $selectedDeliveryId = $this->parsePositiveIntegerQuery($rawDeliveryId);
@@ -933,7 +935,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -1133,8 +1135,9 @@ class QualificationsController extends Controller
         int $evaluationId,
         int $deliveryId
     ) {
+        abort_unless(\App\Support\BackofficePermission::allows(\App\Support\AulaProfile::role(), \App\Support\BackofficePermission::EVALUATIONS_WRITE), 403);
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL);
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
         $userId = $request->session()->get(AuthSessionKeys::USER_ID);
         $nextDeliveryId = (int) $request->input('next_delivery_id', 0);
         $saveAction = (string) $request->input('save_action', 'stay');
@@ -1152,7 +1155,7 @@ class QualificationsController extends Controller
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 
@@ -1351,13 +1354,13 @@ class QualificationsController extends Controller
         int $attachmentId
     ) {
         $correo = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL, '');
-        $rol = $request->session()->get(AuthSessionKeys::USER_ROLE);
+        $rol = \App\Support\AulaProfile::role();
 
         if ($correo === '') {
             return redirect()->route('login');
         }
 
-        if (!in_array($rol, ['admin', 'operador'])) {
+        if (!\App\Support\BackofficePermission::allows($rol, \App\Support\BackofficePermission::EVALUATIONS_READ)) {
             abort(403);
         }
 

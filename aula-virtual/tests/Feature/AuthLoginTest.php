@@ -81,6 +81,7 @@ class AuthLoginTest extends TestCase
                 'email' => 'admin@test.com',
                 'rol' => null,
                 'role_id' => 1,
+                'aula_role' => 'admin',
             ], 200),
         ]);
 
@@ -109,6 +110,7 @@ class AuthLoginTest extends TestCase
                 'email' => 'admin-prod@test.com',
                 'rol' => null,
                 'role_id' => 5,
+                'aula_role' => 'admin',
             ], 200),
         ]);
 
@@ -139,6 +141,7 @@ class AuthLoginTest extends TestCase
                     'email' => 'admin-prod@test.com',
                     'rol_original' => 'admin',
                     'role_id' => 5,
+                    'aula_role' => 'admin',
                 ],
             ], 200),
         ]);
@@ -179,7 +182,7 @@ class AuthLoginTest extends TestCase
         $response->assertRedirect('/login');
         $response->assertSessionHasErrors('username');
         $this->assertSame(
-            'Tu usuario no tiene un rol configurado. Contacta a soporte.',
+            'No fue posible determinar el perfil de acceso al Aula Virtual.',
             session('errors')->first('username')
         );
     }

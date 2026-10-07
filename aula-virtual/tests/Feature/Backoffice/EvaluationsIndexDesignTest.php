@@ -12,6 +12,7 @@ class EvaluationsIndexDesignTest extends TestCase
     {
         session([
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
             AuthSessionKeys::USER_EMAIL => 'admin@local',
         ]);
 
@@ -46,6 +47,7 @@ class EvaluationsIndexDesignTest extends TestCase
     {
         session([
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
             AuthSessionKeys::USER_EMAIL => 'admin@local',
         ]);
 

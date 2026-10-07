@@ -7,7 +7,8 @@
 @php
   $subsanation = ($history ?? collect())->first();
   $isUpdate = is_array($subsanation) && (int) ($subsanation['id'] ?? 0) > 0;
-  $canSubmit = !$error
+  $canSubmit = \App\Support\BackofficePermission::allows(\App\Support\AulaProfile::role(), \App\Support\BackofficePermission::EVALUATIONS_WRITE)
+      && !$error
       && is_array($evaluation)
       && ((($cell['status_key'] ?? '') === 'missing') || $isUpdate)
       && !empty($student['email']);

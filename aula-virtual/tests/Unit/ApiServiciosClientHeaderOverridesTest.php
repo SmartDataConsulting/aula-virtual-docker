@@ -23,6 +23,7 @@ class ApiServiciosClientHeaderOverridesTest extends TestCase
         ]);
         session([
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
             AuthSessionKeys::USER_EMAIL => 'probe@example.invalid',
             AuthSessionKeys::USER_NAME => 'Probe User',
         ]);
@@ -52,6 +53,38 @@ class ApiServiciosClientHeaderOverridesTest extends TestCase
         self::assertTrue($request->hasHeader('X-Correlation-ID'));
         self::assertCount(1, $request->header('Accept'));
         self::assertSame(['application/json'], $request->header('Accept'));
+    }
+
+    public function test_actor_identity_is_preserved_when_admin_listing_scope_is_explicitly_empty(): void
+    {
+        app(ApiServiciosClient::class)->resumenBackoffice('', 'admin');
+        Http::assertSent(fn (OutgoingRequest $request) => $request->header('X-AULA-ACTOR-EMAIL') === ['probe@example.invalid']
+            && $request->header('X-USER-EMAIL') === ['']);
+    }
+
+    public function test_generic_overrides_cannot_replace_or_add_an_actor_header(): void
+    {
+        $client = new ApiServiciosClient();
+        $method = new \ReflectionMethod($client, 'client');
+        $method->invoke($client, [
+            'x-aula-actor-email' => 'forged@example.invalid',
+            'X-AULA-ACTOR-EMAIL' => '',
+            'X-USER-EMAIL' => '', 'X-USER-ROL' => 'docente', 'accept' => '*/*',
+        ])->get('https://api.example.invalid/v1/fixture');
+        Http::assertSent(function (OutgoingRequest $request) {
+            self::assertSame(['probe@example.invalid'], $request->header('X-AULA-ACTOR-EMAIL'));
+            self::assertSame([''], $request->header('X-USER-EMAIL'));
+            self::assertSame(['docente'], $request->header('X-USER-ROL'));
+            self::assertSame(['*/*'], $request->header('accept'));
+            self::assertTrue($request->hasHeader('X-INTERNAL-SERVICE-TOKEN'));
+            self::assertTrue($request->hasHeader('X-Correlation-ID'));
+            return true;
+        });
+        app('session.store')->forget(AuthSessionKeys::USER_EMAIL);
+        $method->invoke($client, ['x-aula-actor-email' => 'forged@example.invalid'])
+            ->get('https://api.example.invalid/v1/no-actor');
+        Http::assertSent(fn (OutgoingRequest $request) => str_ends_with($request->url(), '/no-actor')
+            && $request->header('X-AULA-ACTOR-EMAIL') === ['']);
     }
 
     public function test_admin_empty_email_override_replaces_web_session_email(): void

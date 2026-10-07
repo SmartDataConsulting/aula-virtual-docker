@@ -58,7 +58,8 @@ class UsuarioController extends BaseController
             ], 401);
         }
 
-        $role = $this->resolveRole($usuario);
+        $resolver = app(\App\Services\AulaRoleResolver::class);
+        $role = $resolver->systemRole($usuario);
 
         if ($role === null) {
             Log::warning('login_failed_core', [
@@ -73,11 +74,25 @@ class UsuarioController extends BaseController
             ], 422);
         }
 
+        try {
+            $aulaRole = $resolver->forUser($usuario);
+        } catch (\Throwable $exception) {
+            Log::warning('aula_login_profile_resolution_failed', ['exception' => $exception::class]);
+            $aulaRole = null;
+        }
+        if ($aulaRole === null) {
+            return response()->json([
+                'error' => 'No fue posible determinar el perfil de acceso al Aula Virtual.',
+                'reason' => 'aula_profile_unresolved',
+            ], 403);
+        }
+
         $data = [
             'id' => (int) $usuario->id,
             'nombre' => $usuario->nombre,
             'email' => $usuario->email,
             'rol' => $role,
+            'aula_role' => $aulaRole,
             'rol_original' => $usuario->rol ?? null,
             'role_id' => isset($usuario->role_id) ? (int) $usuario->role_id : null,
             'colaborador_id' => isset($usuario->colaborador_id) ? (int) $usuario->colaborador_id : null,
@@ -93,28 +108,8 @@ class UsuarioController extends BaseController
         return response()->json($data);
     }
 
-    private function resolveRole(object $usuario): ?string
+    public function aulaIdentity()
     {
-        $role = strtolower(trim((string) ($usuario->rol ?? '')));
-        $role = match ($role) {
-            'administrador' => 'admin',
-            'profesor' => 'docente',
-            default => $role,
-        };
-
-        if (in_array($role, ['admin', 'operador', 'docente', 'alumno'], true)) {
-            return $role;
-        }
-
-        $roleId = isset($usuario->role_id) ? (int) $usuario->role_id : 0;
-
-        return match ($roleId) {
-            1 => 'admin',
-            2 => 'operador',
-            3 => 'docente',
-            4 => 'alumno',
-            5 => 'admin',
-            default => null,
-        };
+        return response()->json(['aula_role' => request()->attributes->get('canonical_aula_role')]);
     }
 }

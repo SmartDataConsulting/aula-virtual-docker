@@ -161,7 +161,7 @@ class AttendanceController extends Controller
 
     public function sync(Request $request, int $session)
     {
-        $role = strtolower((string) $request->session()->get(AuthSessionKeys::USER_ROLE, ''));
+        $role = strtolower((string) $request->session()->get(AuthSessionKeys::AULA_ROLE, ''));
         abort_unless(in_array($role, ['admin', 'administrador'], true), 403);
         $result = $this->attendance->sync($session);
         return $this->mutationResponse($request, $result, 'Asistencia conciliada con Zoom.', 'Zoom aun no tiene disponible el reporte.');
@@ -216,7 +216,7 @@ class AttendanceController extends Controller
     private function authContext(Request $request): array
     {
         $email = (string) $request->session()->get(AuthSessionKeys::USER_EMAIL, '');
-        $role = strtolower((string) $request->session()->get(AuthSessionKeys::USER_ROLE, ''));
+        $role = strtolower((string) $request->session()->get(AuthSessionKeys::AULA_ROLE, ''));
         abort_unless(in_array($role, self::ALLOWED_ROLES, true), 403);
         return [$role, $email, in_array($role, ['admin', 'administrador'], true)];
     }

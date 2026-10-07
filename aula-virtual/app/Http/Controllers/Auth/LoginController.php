@@ -83,7 +83,7 @@ class LoginController extends Controller
             $payload = $this->normalizeCorePayload((array) $coreResult->data());
             $role = $this->resolveCoreRole($payload);
 
-            if ($role === null) {
+            if ($role === null || !$this->hasAulaProfile($payload, $role)) {
                 Log::warning('Login failed (core role missing).', [
                     'ip' => $request->ip(),
                     'status' => $coreResult->status(),
@@ -92,7 +92,7 @@ class LoginController extends Controller
                 ]);
 
                 return back()->withErrors([
-                    'username' => 'Tu usuario no tiene un rol configurado. Contacta a soporte.',
+                    'username' => 'No fue posible determinar el perfil de acceso al Aula Virtual.',
                 ])->onlyInput('username');
             }
 
@@ -107,6 +107,9 @@ class LoginController extends Controller
             return redirect($this->redirectForRole($role));
         }
 
+        if ($this->isUnresolvedAulaProfile($coreResult)) {
+            return back()->withErrors(['username' => 'No fue posible determinar el perfil de acceso al Aula Virtual.'])->onlyInput('username');
+        }
         if ($coreResult->status() !== 404) {
             $this->registerFailedLogin($username);
 
@@ -144,7 +147,7 @@ class LoginController extends Controller
             $payload = $this->normalizeCorePayload((array) $coreResult->data());
             $role = $this->resolveCoreRole($payload);
 
-            if ($role === null) {
+            if ($role === null || !$this->hasAulaProfile($payload, $role)) {
                 Log::warning('Login failed (core role missing).', [
                     'ip' => $request->ip(),
                     'status' => $coreResult->status(),
@@ -152,7 +155,7 @@ class LoginController extends Controller
                 ]);
 
                 return back()->withErrors([
-                    'username' => 'Tu usuario no tiene un rol configurado. Contacta a soporte.',
+                    'username' => 'No fue posible determinar el perfil de acceso al Aula Virtual.',
                 ])->onlyInput('username');
             }
 
@@ -167,6 +170,9 @@ class LoginController extends Controller
             return redirect($this->redirectForRole($role));
         }
 
+        if ($this->isUnresolvedAulaProfile($coreResult)) {
+            return back()->withErrors(['username' => 'No fue posible determinar el perfil de acceso al Aula Virtual.'])->onlyInput('username');
+        }
         if ($coreResult->status() === 404) {
             return null;
         }
@@ -237,6 +243,23 @@ class LoginController extends Controller
         $request->session()->put(AuthSessionKeys::USER_NAME, $payload['nombre'] ?? $payload['user_display_name'] ?? null);
         $request->session()->put(AuthSessionKeys::JWT_TOKEN, $token);
         $request->session()->put(AuthSessionKeys::USER_ROLE, $role);
+        $request->session()->put(AuthSessionKeys::AULA_ROLE, $token !== null ? 'alumno' : $payload['aula_role']);
+    }
+
+    private function hasAulaProfile(array $payload, string $role): bool
+    {
+        $aulaRole = $payload['aula_role'] ?? null;
+        return $role === 'operador'
+            ? in_array($aulaRole, ['operador', 'docente'], true)
+            : $aulaRole === $role;
+    }
+
+    private function isUnresolvedAulaProfile(\App\Services\Support\ServiceResult $result): bool
+    {
+        $error = $result->error();
+        $body = json_decode((string) ($error['body'] ?? ''), true);
+        return $result->status() === 403
+            && ($error['reason'] ?? $body['reason'] ?? null) === 'aula_profile_unresolved';
     }
 
     private function redirectForRole(string $role): string

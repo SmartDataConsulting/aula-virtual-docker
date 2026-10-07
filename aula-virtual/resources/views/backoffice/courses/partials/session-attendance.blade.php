@@ -1,6 +1,6 @@
 @php
   $canWriteAttendance = \App\Support\BackofficePermission::allows(
-      session(\App\Support\AuthSessionKeys::USER_ROLE),
+      session(\App\Support\AuthSessionKeys::AULA_ROLE),
       \App\Support\BackofficePermission::ATTENDANCE_WRITE
   );
   $records = collect($attendance['items'] ?? [])->values();
@@ -81,7 +81,7 @@
         @endif
       </div>
       <div>
-        @if(\App\Support\BackofficePermission::allows(session(\App\Support\AuthSessionKeys::USER_ROLE), \App\Support\BackofficePermission::ATTENDANCE_READ))
+        @if(\App\Support\BackofficePermission::allows(session(\App\Support\AuthSessionKeys::AULA_ROLE), \App\Support\BackofficePermission::ATTENDANCE_READ))
           <a href="{{ $attendanceExportUrl ?? route('backoffice.attendance.course.export', [$course->id, 'session_id' => $session->id]) }}">Exportar sesión</a>
         @endif
         @if($showFullAttendanceLink ?? true)

@@ -17,6 +17,7 @@ class SurveyModuleTest extends TestCase
             AuthSessionKeys::LOGGED_IN => true,
             AuthSessionKeys::USER_EMAIL => 'student@example.com',
             AuthSessionKeys::USER_ROLE => 'alumno',
+            AuthSessionKeys::AULA_ROLE => 'alumno',
         ])->get(route('mis-cursos.surveys.index'));
 
         $response->assertRedirect(route('mis-cursos.index'));
@@ -28,6 +29,7 @@ class SurveyModuleTest extends TestCase
             AuthSessionKeys::LOGGED_IN => true,
             AuthSessionKeys::USER_EMAIL => 'teacher@example.com',
             AuthSessionKeys::USER_ROLE => 'operador',
+            AuthSessionKeys::AULA_ROLE => 'operador',
         ])->post(route('mis-cursos.survey.store', [10, 44, 5]), [
             'answers' => ['satisfaccion' => 5],
         ]);
@@ -40,6 +42,7 @@ class SurveyModuleTest extends TestCase
         session([
             AuthSessionKeys::USER_EMAIL => 'admin@example.com',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ]);
 
         $results = new LengthAwarePaginator([[
@@ -124,6 +127,7 @@ class SurveyModuleTest extends TestCase
             AuthSessionKeys::LOGGED_IN => true,
             AuthSessionKeys::USER_EMAIL => 'admin@example.com',
             AuthSessionKeys::USER_ROLE => 'admin',
+            AuthSessionKeys::AULA_ROLE => 'admin',
         ])->get(route('backoffice.surveys.results.export', 18).'?scope=summary&kind=final&session=10');
 
         $response->assertOk();

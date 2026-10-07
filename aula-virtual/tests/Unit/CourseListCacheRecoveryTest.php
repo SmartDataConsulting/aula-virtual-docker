@@ -16,7 +16,7 @@ class CourseListCacheRecoveryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        session([AuthSessionKeys::USER_ROLE => 'admin']);
+        session([AuthSessionKeys::USER_ROLE => 'admin', AuthSessionKeys::AULA_ROLE => 'admin']);
         PerformanceCache::forget(PerformanceCache::courseListKey('main', 'admin', ''));
     }
 
@@ -75,7 +75,7 @@ class CourseListCacheRecoveryTest extends TestCase
 
     public function test_student_fallback_preserves_suggestions_and_valid_courses(): void
     {
-        session([AuthSessionKeys::USER_ROLE => 'alumno']);
+        session([AuthSessionKeys::USER_ROLE => 'alumno', AuthSessionKeys::AULA_ROLE => 'alumno']);
         $client = Mockery::mock(ApiServiciosClient::class);
         $client->shouldReceive('resumenAlumno')->once()->with('student@example.test')->andReturn(ServiceResult::failure([], 503));
         $client->shouldReceive('listarCursos')->once()->with('student@example.test', true)
